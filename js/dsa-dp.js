@@ -19,7 +19,7 @@
       fr.push(F(0, "dp[i] will hold the best sum using only a[0..i]. At each index we either skip a[i] or take it (and then a[i-1] cannot be used).", [arr(a, { label: "a" }), arr(dp, { label: "dp" })]));
       for (let i = 0; i < n; i++) { const skip = g(i - 1), take = a[i] + g(i - 2);
         const hc = {}; if (i - 1 >= 0) hc[i - 1] = "cmp"; if (i - 2 >= 0) hc[i - 2] = "cmp";
-        fr.push(F(3, `i = ${i}: skip a[${i}] → keep dp[${i - 1}] = ${skip}. Take a[${i}] → ${a[i]} + dp[${i - 2}] (${g(i - 2)}) = ${take}.`, [arr(a, { label: "a", hl: { [i]: "act" } }), arr(dp, { label: "dp", hl: { ...hc, [i]: "act" } })]));
+        fr.push(F(3, `i = ${i}: skip a[${i}] → keep ${i >= 1 ? `dp[${i - 1}] = ${skip}` : "0 (nothing before it)"}. Take a[${i}] → ${a[i]} + ${i >= 2 ? `dp[${i - 2}] (${g(i - 2)})` : "0 (nothing two back)"} = ${take}.`, [arr(a, { label: "a", hl: { [i]: "act" } }), arr(dp, { label: "dp", hl: { ...hc, [i]: "act" } })]));
         dp[i] = Math.max(skip, take);
         const h = { [i]: "done" }; if (i - 1 >= 0) h[i - 1] = skip >= take ? "found" : "cmp"; if (i - 2 >= 0) h[i - 2] = take > skip ? "found" : "cmp";
         fr.push(F(4, `dp[${i}] = max(${skip}, ${take}) = <b>${dp[i]}</b>: ${take > skip ? `taking a[${i}] = ${a[i]} is better` : `skipping a[${i}] is at least as good`}.`, [arr(a, { label: "a", hl: { [i]: "act" } }), arr(dp, { label: "dp", hl: h })])); }
@@ -41,7 +41,7 @@
         if (i === 0 && j === 0) { dp[0][0] = 1; fr.push(F(6, "Start cell (0,0): exactly 1 way to be here (you start on it).", [G2({ "0,0": "act" })])); continue; }
         const up = i > 0 ? dp[i - 1][j] : 0, left = j > 0 ? dp[i][j - 1] : 0; dp[i][j] = up + left; const h = { [i + "," + j]: "act" };
         if (i > 0 && !g[i - 1][j]) h[(i - 1) + "," + j] = "cmp"; if (j > 0 && !g[i][j - 1]) h[i + "," + (j - 1)] = "cmp";
-        fr.push(F(10, `(${i},${j}) can be entered from the top (${up} ways) or from the left (${left} ways): ${up} + ${left} = <b>${dp[i][j]}</b>.`, [G2(h)])); }
+        fr.push(F(10, `(${i},${j}) can be entered from the top (${up} way${up === 1 ? "" : "s"}) or from the left (${left} way${left === 1 ? "" : "s"}): ${up} + ${left} = <b>${dp[i][j]}</b>.`, [G2(h)])); }
       fr.push(F(11, `<b>${dp[n - 1][m - 1]}</b> paths reach the bottom-right cell. O(N·M) time. Each row only reads the row above, so one row of size M is enough (row[j] += row[j-1]).`, [G2({ [(n - 1) + "," + (m - 1)]: "found" })])); return fr; } };
 
   /* Edit distance with costs */
@@ -71,25 +71,28 @@
   /* 0/1 vs unbounded: loop direction */
   A.dp_loopDirection = { title: "1-D knapsack: why the loop direction decides 0/1 vs unbounded", inputLabel: "weights | values | capacity | mode (01, unbounded, wrong)", input: "3 4 7 | 2 3 5 | 8 | 01",
     presets: [["0/1: right → left", "3 4 7 | 2 3 5 | 8 | 01"], ["Unbounded: left → right", "3 4 7 | 2 3 5 | 8 | unbounded"], ["Bug: 0/1 written left → right", "3 4 7 | 2 3 5 | 8 | wrong"]],
-    code: ["dp = [0] * (W+1)          # dp[j] = best value with capacity j", "for each item (w, v):", "    0/1:       for j = W down to w   # dp[j-w] still holds the OLD row", "    unbounded: for j = w up to W     # dp[j-w] may already use this item", "        dp[j] = max(dp[j], v + dp[j - w])"],
+    about: "One row dp[capacity] is updated item by item. The arrow j marks the capacity being improved; the second highlighted cell is dp[j-w], the value it reads. Compare the presets: if dp[j-w] was already changed for the same item, that item is being used a second time.",
+    code: ["dp = [0] * (W + 1)              # dp[j] = best value with capacity j", "for w, v in items:", "    if zero_one:", "        js = range(W, w - 1, -1)    # high -> low: dp[j - w] is still the OLD value", "    else:", "        js = range(w, W + 1)        # low -> high: dp[j - w] may already use this item", "    for j in js:", "        dp[j] = max(dp[j], v + dp[j - w])", "return dp[W]"],
     gen(s) { const [w0, v0, c0, m0] = split2(s); const wt = need(cap(nums(w0), 4, "items"), "weights"), val = nums(v0), W = Math.max(1, Math.min(12, nums(c0)[0] || 8)), mode = /unb/i.test(m0 || "") ? "unb" : /wr|bug/i.test(m0 || "") ? "wrong" : "01";
       if (val.length < wt.length) throw new Error("Give one value per weight.");
-      const dp = Array(W + 1).fill(0), fr = [], asc = mode !== "01", line = asc ? 3 : 2; let reused = false;
+      const dp = Array(W + 1).fill(0), fr = [], asc = mode !== "01", line = asc ? 5 : 3; let reused = false;
       const items = (k) => wt.map((w, t) => ({ v: `w${w}/v${val[t]}`, cls: t === k ? "hit" : "" }));
       fr.push(F(0, mode === "01" ? "0/1 knapsack in one row: sweep capacity from high to low." : mode === "unb" ? "Unbounded knapsack: sweep capacity from low to high so an item can be added again." : "A 0/1 problem coded with an ascending loop. Watch an item get used twice.", [arr(dp, { label: "dp[capacity]" }), chips("items", items(-1))]));
       wt.forEach((w, k) => { const v = val[k], touched = new Set();
+        fr.push(F(line, `Item w${w}/v${v}: sweep capacity j ${asc ? `upwards from ${w} to ${W}` : `downwards from ${W} to ${w}`}${mode === "wrong" ? " (the bug: a 0/1 problem with the ascending loop)" : ""}.`, [arr(dp, { label: "dp[capacity]" }), chips("items", items(k))]));
         const js = []; for (let j = w; j <= W; j++) js.push(j); if (!asc) js.reverse();
         js.forEach((j) => { const cand = v + dp[j - w], from = j - w, again = touched.has(from);
           if (cand > dp[j]) { const old = dp[j]; dp[j] = cand; touched.add(j); if (again && mode === "wrong") reused = true;
-            fr.push(F(4, `item w${w}/v${v}, j = ${j}: ${v} + dp[${from}] = ${cand} > ${old} → dp[${j}] = <b>${cand}</b>${again ? (mode === "wrong" ? ` <b>BUG:</b> dp[${from}] already contains this item, so it is now used twice.` : ` (dp[${from}] already used this item: reuse, which unbounded allows)`) : ""}`, [arr(dp, { label: "dp[capacity]", hl: { [j]: again && mode === "wrong" ? "bad" : "act", [from]: again ? "swap" : "cmp" }, ptr: { j } }), chips("items", items(k))])); }
-          else fr.push(F(4, `item w${w}/v${v}, j = ${j}: ${v} + dp[${from}] = ${cand} ≤ ${dp[j]}, keep`, [arr(dp, { label: "dp[capacity]", hl: { [j]: "act", [from]: "cmp" }, ptr: { j } }), chips("items", items(k))])); });
-        fr.push(F(line, `Finished item w${w}/v${v} (${asc ? "ascending" : "descending"} sweep).`, [arr(dp, { label: "dp[capacity]" }), chips("items", items(k))])); });
-      fr.push(F(-1, `Best value with capacity ${W}: <b>${dp[W]}</b>. ${mode === "01" ? "Descending order means dp[j-w] still holds the value from before this item, so each item is used at most once." : mode === "unb" ? "Ascending order lets dp[j-w] already contain the item, which is exactly unbounded reuse." : reused ? "Wrong for 0/1: an item was counted more than once. Loop from W down to w instead." : "No reuse happened on this input, but the ascending loop is still wrong for 0/1."}`, [arr(dp, { label: "dp[capacity]", hl: { [W]: mode === "wrong" && reused ? "bad" : "found" } })])); return fr; } };
+            fr.push(F(7, `j = ${j}: taking w${w}/v${v} gives ${v} + dp[${from}] = ${cand}, better than the current ${old} → dp[${j}] = <b>${cand}</b>.${again ? (mode === "wrong" ? ` <b>BUG:</b> dp[${from}] already contains this item, so it is now used twice.` : ` (dp[${from}] already used this item: reuse, which unbounded allows)`) : ""}`, [arr(dp, { label: "dp[capacity]", hl: { [j]: again && mode === "wrong" ? "bad" : "act", [from]: again ? "swap" : "cmp" }, ptr: { j } }), chips("items", items(k))])); }
+          else fr.push(F(7, `j = ${j}: taking w${w}/v${v} gives ${v} + dp[${from}] = ${cand}, not better than ${dp[j]}, so dp[${j}] stays.`, [arr(dp, { label: "dp[capacity]", hl: { [j]: "act", [from]: "cmp" }, ptr: { j } }), chips("items", items(k))])); });
+        fr.push(F(1, `Done with item w${w}/v${v}: dp now holds the best values using the items seen so far.`, [arr(dp, { label: "dp[capacity]" }), chips("items", items(k))])); });
+      fr.push(F(8, `Best value with capacity ${W}: <b>${dp[W]}</b>. ${mode === "01" ? "Descending order means dp[j-w] still holds the value from before this item, so each item is used at most once." : mode === "unb" ? "Ascending order lets dp[j-w] already contain the item, which is exactly unbounded reuse." : reused ? "Wrong for 0/1: an item was counted more than once. Loop from W down to w instead." : "No reuse happened on this input, but the ascending loop is still wrong for 0/1."}`, [arr(dp, { label: "dp[capacity]", hl: { [W]: mode === "wrong" && reused ? "bad" : "found" } })])); return fr; } };
 
   /* Palindrome table filled by gap */
   A.dp_palGap = { title: "Interval DP: palindromic substrings, filled by gap", inputLabel: "string (≤ 8 chars)", input: "cbcacbbc",
     presets: [["cbcacbbc", "cbcacbbc"], ["Notes: abac", "abac"], ["aaaa", "aaaa"]],
-    code: ["for gap in 0 .. n-1:                 # length - 1", "  for i in 0 .. n-1-gap:  j = i + gap", "    gap 0: true ;  gap 1: s[i] == s[j]", "    else:  s[i] == s[j] and dp[i+1][j-1]   # inner substring"],
+    about: "Row i, column j answers: is s[i..j] a palindrome (T/F)? Cells below the diagonal are unused. The table fills one diagonal (one substring length) at a time, and each longer cell looks at the cell just inside it, down-left on the diagonal.",
+    code: ["dp = [[False] * n for _ in range(n)]", "count = 0", "for gap in range(n):                 # gap = length - 1", "    for i in range(n - gap):", "        j = i + gap", "        if gap == 0:", "            dp[i][j] = True              # one letter", "        elif gap == 1:", "            dp[i][j] = s[i] == s[j]       # two letters", "        else:", "            dp[i][j] = s[i] == s[j] and dp[i + 1][j - 1]   # ends match + inside", "        count += dp[i][j]                # True counts as 1"],
     gen(s) { const ch = cap([...String(s).replace(/\s/g, "")], 8, "characters"), n = need(ch, "characters").length, dp = Array.from({ length: n }, () => Array(n).fill(null)), fr = []; let count = 0, best = "";
       const G2 = (hl) => ({ t: "grid", rh: ch.map((c, i) => `${i} ${c}`), ch: ch.map((c, j) => `${j} ${c}`), rows: dp.map((r, i) => r.map((v, j) => (j < i ? "·" : v === null ? "" : v ? "T" : "F"))), hl });
       fr.push(F(0, "dp[i][j] = is s[i..j] a palindrome? Each cell needs the cell one diagonal shorter, so fill diagonal by diagonal.", [G2({})]));
@@ -98,51 +101,54 @@
         else if (gap === 1) { dp[i][j] = ch[i] === ch[j]; why = `'${ch[i]}' ${dp[i][j] ? "=" : "≠"} '${ch[j]}'`; }
         else { dp[i][j] = ch[i] === ch[j] && dp[i + 1][j - 1]; h[(i + 1) + "," + (j - 1)] = "cmp"; why = ch[i] !== ch[j] ? `ends '${ch[i]}' ≠ '${ch[j]}'` : `ends match, inner s[${i + 1}..${j - 1}] is ${dp[i + 1][j - 1] ? "T" : "F"}`; }
         if (dp[i][j]) { count++; if (gap + 1 > best.length) best = ch.slice(i, j + 1).join(""); h[i + "," + j] = "found"; }
-        fr.push(F(gap < 2 ? 2 : 3, `gap ${gap}: "${ch.slice(i, j + 1).join("")}" → ${why} → <b>${dp[i][j] ? "palindrome" : "no"}</b>`, [G2(h), vars({ gap, "palindromes so far": count, "longest so far": best })])); }
+        fr.push(F(gap === 0 ? 6 : gap === 1 ? 8 : 10, `gap ${gap}, s[${i}..${j}] = "${ch.slice(i, j + 1).join("")}": ${why} → <b>${dp[i][j] ? "palindrome" : "not a palindrome"}</b>.`, [G2(h), vars({ gap, "palindromes so far": count, "longest so far": best })])); }
       const fin = {}; for (let i = 0; i < n; i++) for (let j = i; j < n; j++) if (dp[i][j]) fin[i + "," + j] = "done";
-      fr.push(F(-1, `<b>${count}</b> palindromic substrings; longest is "${best}". O(N²) time and space. Min-cut partitioning reads this table in O(1) per check.`, [G2(fin)])); return fr; } };
+      fr.push(F(11, `<b>${count}</b> palindromic substrings; longest is "${best}". O(N²) time and space. Min-cut partitioning reads this table in O(1) per check.`, [G2(fin)])); return fr; } };
 
   /* Candy: two passes */
   A.dp_candy = { title: "Greedy: candy distribution in two passes", inputLabel: "marks", input: "1 6 3 1 10 12 20 5 2",
     presets: [["Notes example", "1 6 3 1 10 12 20 5 2"], ["1 5 2 1", "1 5 2 1"], ["All equal", "4 4 4 4 4"]],
-    code: ["c = [1] * n", "for i in 1 .. n-1:     if a[i] > a[i-1]: c[i] = c[i-1] + 1          # left neighbour rule", "for i in n-2 .. 0:     if a[i] > a[i+1]: c[i] = max(c[i], c[i+1] + 1)   # right neighbour rule", "return sum(c)"],
+    about: "Bars are the marks, the row below is each student's candies. Pass 1 walks left to right enforcing 'more than my left neighbour'; pass 2 walks right to left enforcing 'more than my right neighbour'. The pair being compared is highlighted.",
+    code: ["c = [1] * n                          # everyone starts with 1", "for i in range(1, n):                # pass 1: left -> right", "    if a[i] > a[i - 1]:", "        c[i] = c[i - 1] + 1          # beat the left neighbour", "for i in range(n - 2, -1, -1):       # pass 2: right -> left", "    if a[i] > a[i + 1]:", "        c[i] = max(c[i], c[i + 1] + 1)   # beat the right neighbour too", "return sum(c)"],
     gen(s) { const a = need(cap(nums(s), 12), "marks"), n = a.length, c = a.map(() => 1), fr = [];
       const P = (hb, hc, note) => [{ t: "bars", vals: a, hl: hb }, arr(c, { label: "candies", hl: hc }), vars({ pass: note, total: c.reduce((x, y) => x + y, 0) })];
-      fr.push(F(0, "Everyone starts with 1 candy.", P({}, {}, "start")));
+      fr.push(F(0, "Everyone starts with 1 candy, the minimum allowed.", P({}, {}, "start")));
       for (let i = 1; i < n; i++) { const up = a[i] > a[i - 1]; if (up) c[i] = c[i - 1] + 1;
-        fr.push(F(1, up ? `${a[i]} > ${a[i - 1]} (left): c[${i}] = c[${i - 1}] + 1 = <b>${c[i]}</b>` : `${a[i]} ≤ ${a[i - 1]}: no left rule, c[${i}] stays ${c[i]}`, P({ [i]: "act", [i - 1]: "cmp" }, { [i]: up ? "done" : "act" }, "left → right"))); }
+        fr.push(F(up ? 3 : 2, up ? `Marks ${a[i]} > left neighbour ${a[i - 1]}, so student ${i} needs one more than c[${i - 1}]: c[${i}] = <b>${c[i]}</b>.` : `Marks ${a[i]} ≤ left neighbour ${a[i - 1]}: no left rule applies, c[${i}] stays ${c[i]}.`, P({ [i]: "act", [i - 1]: "cmp" }, { [i]: up ? "done" : "act" }, "left → right"))); }
       for (let i = n - 2; i >= 0; i--) { const dn = a[i] > a[i + 1], old = c[i]; if (dn) c[i] = Math.max(c[i], c[i + 1] + 1);
-        fr.push(F(2, dn ? `${a[i]} > ${a[i + 1]} (right): c[${i}] = max(${old}, ${c[i + 1]} + 1) = <b>${c[i]}</b>${c[i] === old ? " (left pass already enough)" : ""}` : `${a[i]} ≤ ${a[i + 1]}: no right rule`, P({ [i]: "act", [i + 1]: "cmp" }, { [i]: dn && c[i] !== old ? "done" : "act" }, "right → left"))); }
-      fr.push(F(3, `Total <b>${c.reduce((x, y) => x + y, 0)}</b> candies. Pass 1 fixes every left rule; pass 2 only raises values, so it never breaks pass 1. O(N).`, P({}, Object.fromEntries(c.map((_, i) => [i, "found"])), "done"))); return fr; } };
+        fr.push(F(dn ? 6 : 5, dn ? `Marks ${a[i]} > right neighbour ${a[i + 1]}: c[${i}] = max(${old}, ${c[i + 1]} + 1) = <b>${c[i]}</b>${c[i] === old ? " (pass 1 already gave enough)" : ""}.` : `Marks ${a[i]} ≤ right neighbour ${a[i + 1]}: no right rule applies, c[${i}] stays ${c[i]}.`, P({ [i]: "act", [i + 1]: "cmp" }, { [i]: dn && c[i] !== old ? "done" : "act" }, "right → left"))); }
+      fr.push(F(7, `Total <b>${c.reduce((x, y) => x + y, 0)}</b> candies. Pass 1 fixes every left rule; pass 2 only raises values, so it never breaks pass 1. O(N).`, P({}, Object.fromEntries(c.map((_, i) => [i, "found"])), "done"))); return fr; } };
 
   /* Stock: at most 2 transactions state machine */
   A.dp_stock2 = { title: "State machine DP: stock with at most 2 transactions", inputLabel: "prices", input: "3 3 5 0 0 3 1 4",
     presets: [["LeetCode example", "3 3 5 0 0 3 1 4"], ["Notes chart", "3 6 6 2 6 4 9 3 1"], ["Only rising", "1 2 3 4 5"]],
-    code: ["b1, s1, b2, s2 = -p[0], 0, -inf, 0    # best cash after each step", "for x in p[1:]:   (use yesterday's values on the right)", "    b1 = max(b1, -x)          # first buy", "    s1 = max(s1, b1 + x)      # first sell", "    b2 = max(b2, s1 - x)      # second buy, paid from first profit", "    s2 = max(s2, b2 + x)      # second sell", "return max(s1, s2)"],
+    about: "Bars are the daily prices; the arrow is today. The four chips are the best cash you could hold after first buy (b1), first sell (s1), second buy (b2) and second sell (s2). Chips that improve today light up.",
+    code: ["b1 = -p[0]                     # best cash after the first buy", "s1 = 0                         # ... after the first sell", "b2 = float('-inf')             # ... after the second buy", "s2 = 0                         # ... after the second sell", "for x in p[1:]:", "    # the right-hand side uses yesterday's values", "    b1, s1, b2, s2 = (max(b1, -x),        # first buy", "                      max(s1, b1 + x),    # first sell", "                      max(b2, s1 - x),    # second buy, paid from first profit", "                      max(s2, b2 + x))    # second sell", "return max(s1, s2)"],
     gen(s) { const p = need(cap(nums(s), 12), "prices"), fr = []; let b1 = -p[0], s1 = 0, b2 = -Infinity, s2 = 0;
       const f = (v) => (v === -Infinity ? "−∞" : v);
       const P = (d, ch) => [{ t: "bars", vals: p, hl: { [d]: "act" }, ptr: { day: d } }, chips("states (cash in hand)", [["b1", b1], ["s1", s1], ["b2", b2], ["s2", s2]].map(([k, v]) => ({ v: `${k} = ${f(v)}`, cls: ch.includes(k) ? "hit" : "" })))];
-      fr.push(F(0, `Day 0: buying costs ${p[0]}, so b1 = ${-p[0]}. No second buy yet.`, P(0, ["b1"])));
+      fr.push(F(0, `Day 0: the only possible move is the first buy at ${p[0]}, so b1 = ${-p[0]}. Nothing sold yet (s1 = s2 = 0), and a second buy is not possible yet (b2 = −∞).`, P(0, ["b1"])));
       for (let d = 1; d < p.length; d++) { const x = p[d], nb1 = Math.max(b1, -x), ns1 = Math.max(s1, b1 + x), nb2 = Math.max(b2, s1 - x), ns2 = Math.max(s2, b2 + x), ch = [];
         if (nb1 !== b1) ch.push("b1"); if (ns1 !== s1) ch.push("s1"); if (nb2 !== b2) ch.push("b2"); if (ns2 !== s2) ch.push("s2");
         b1 = nb1; s1 = ns1; b2 = nb2; s2 = ns2;
-        fr.push(F(ch.includes("s2") ? 5 : ch.includes("b2") ? 4 : ch.includes("s1") ? 3 : ch.includes("b1") ? 2 : 1, `Day ${d}, price ${x}: ${ch.length ? "improved " + ch.join(", ") : "nothing improves (keep every state)"}`, P(d, ch))); }
-      fr.push(F(6, `Max profit <b>${Math.max(s1, s2)}</b>. Four variables replace dp[day][transactions][holding]: O(N) time, O(1) space. k transactions → 2k variables.`, P(p.length - 1, [s2 >= s1 ? "s2" : "s1"]))); return fr; } };
+        fr.push(F(ch.includes("s2") ? 9 : ch.includes("b2") ? 8 : ch.includes("s1") ? 7 : ch.includes("b1") ? 6 : 4, `Day ${d}, price ${x}: ${ch.length ? ch.map((k) => ({ b1: `buying here is cheaper (b1 = ${f(b1)})`, s1: `selling the first share here pays more (s1 = ${f(s1)})`, b2: `second buy here leaves more cash (b2 = ${f(b2)})`, s2: `second sell here pays more (s2 = ${f(s2)})` })[k]).join("; ") : "no state improves, so every state keeps its value from yesterday"}.`, P(d, ch))); }
+      fr.push(F(10, `Max profit <b>${Math.max(s1, s2)}</b>. Four variables replace dp[day][transactions][holding]: O(N) time, O(1) space. k transactions → 2k variables.`, P(p.length - 1, [s2 >= s1 ? "s2" : "s1"]))); return fr; } };
 
   /* Jump game: greedy reach, level by level */
   A.dp_jumpReach = { title: "Greedy: jump game, farthest reach level by level", inputLabel: "max jump at each index", input: "2 3 1 1 4",
     presets: [["2 3 1 1 4", "2 3 1 1 4"], ["Notes: 3 2 4 1 2 3 1 0 1", "3 2 4 1 2 3 1 0 1"], ["Stuck: 3 2 1 0 4", "3 2 1 0 4"]],
-    code: ["jumps = 0; end = 0; far = 0", "for i in 0 .. n-2:", "    far = max(far, i + a[i])      # farthest index the next jump can reach", "    if i == end:                  # used up this jump's window", "        if far <= i: return unreachable", "        jumps += 1; end = far       # take one jump, new window ends at far"],
+    about: "The shaded window is every index reachable with the current number of jumps. Pointer i scans the window while far tracks the farthest index the next jump could reach; when i reaches the window's end, one jump is taken and the window extends to far.",
+    code: ["jumps = 0", "end = 0                       # last index of the current window", "far = 0                       # farthest index the next jump can reach", "for i in range(n - 1):", "    far = max(far, i + a[i])", "    if i == end:              # this window is used up", "        if far <= i:", "            return -1         # stuck: the last index is unreachable", "        jumps += 1            # take one more jump", "        end = far             # new window ends at far", "        if end >= n - 1:", "            break", "return jumps"],
     gen(s) { const a = need(cap(nums(s), 12), "numbers"), n = a.length, fr = []; let jumps = 0, end = 0, far = 0, start = 0;
       const P = (i, h) => [arr(a, { hl: h, win: [start, Math.min(end, n - 1)], ptr: { i, far: Math.min(far, n - 1) } }), vars({ jumps, "window end": end, far })];
-      if (n === 1) { fr.push(F(0, "Already at the last index: 0 jumps.", P(0, { 0: "found" }))); return fr; }
-      fr.push(F(0, "The shaded window is everything reachable with the current number of jumps.", P(0, {})));
+      if (n === 1) { fr.push(F(12, "Already at the last index: 0 jumps.", P(0, { 0: "found" }))); return fr; }
+      fr.push(F(2, "Start at index 0 with 0 jumps. The shaded window (just index 0) is everything reachable so far.", P(0, {})));
       for (let i = 0; i < n - 1; i++) { const old = far; far = Math.max(far, i + a[i]);
-        fr.push(F(2, `i = ${i}: reach ${i} + ${a[i]} = ${i + a[i]}${far > old ? ` → far = <b>${far}</b>` : `, far stays ${far}`}`, P(i, { [i]: "act" })));
-        if (i === end) { if (far <= i) { fr.push(F(4, `Window ends at ${i} and nothing reaches past it: the last index is <b>unreachable</b> (Jump Game I answers false).`, P(i, { [i]: "bad" }))); return fr; }
-          jumps++; start = end + 1; end = far; fr.push(F(5, `Window used up at ${i}: jump #${jumps}, new window ${start}..${Math.min(end, n - 1)}`, P(i, { [i]: "cmp" })));
+        fr.push(F(4, `i = ${i}: from here one jump reaches ${i} + ${a[i]} = ${i + a[i]}${far > old ? `, the farthest so far → far = <b>${far}</b>` : `, not past ${far}, so far stays ${far}`}.`, P(i, { [i]: "act" })));
+        if (i === end) { if (far <= i) { fr.push(F(7, `Window ends at ${i} and nothing reaches past it: the last index is <b>unreachable</b> (Jump Game I answers false).`, P(i, { [i]: "bad" }))); return fr; }
+          jumps++; start = end + 1; end = far; fr.push(F(9, `i reached the end of the window, so take jump #${jumps}. Everything up to far = ${far} is now reachable: new window ${start}..${Math.min(end, n - 1)}.`, P(i, { [i]: "cmp" })));
           if (end >= n - 1) break; } }
-      fr.push(F(-1, `Reached index ${n - 1} with <b>${jumps}</b> jumps. Each window is one BFS level, so this is O(N) time and O(1) space.`, P(n - 1, { [n - 1]: "found" }))); return fr; } };
+      fr.push(F(12, `Reached index ${n - 1} with <b>${jumps}</b> jumps. Each window is one BFS level, so this is O(N) time and O(1) space.`, P(n - 1, { [n - 1]: "found" }))); return fr; } };
 
   const T = BP.DSA.topics;
 

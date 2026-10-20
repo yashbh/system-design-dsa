@@ -14,7 +14,8 @@
 
   A.lin_mergeSorted = { title: "Merge two sorted lists with a dummy node", inputLabel: "list 1 | list 2", input: "2 6 10 14 19 | 3 5 9 11",
     presets: [["Notes example", "2 6 10 14 19 | 3 5 9 11"], ["Quiz", "2 10 11 | 1 5 12 15"], ["One list empty", " | 4 8"]],
-    code: ["dummy = Node(-1); tail = dummy", "while t1 and t2:", "    if t1.val <= t2.val: tail.next = t1; t1 = t1.next", "    else:                tail.next = t2; t2 = t2.next", "    tail = tail.next", "tail.next = t1 if t1 else t2     # one link attaches the rest", "return dummy.next"],
+    about: "Two sorted lists (shown as chips) are woven into one chain. The highlighted chip is the front node being compared; the list panel is the merged result, with the tail pointer on its last node.",
+    code: ["dummy = Node(-1)", "tail = dummy", "while t1 and t2:", "    if t1.val <= t2.val:      # <= keeps it stable", "        tail.next = t1", "        t1 = t1.next", "    else:", "        tail.next = t2", "        t2 = t2.next", "    tail = tail.next", "tail.next = t1 if t1 else t2  # one link attaches the rest", "return dummy.next"],
     gen(s) {
       const [x0, y0] = split2(s);
       const a = cap(nums(x0 || ""), 7).sort((p, q) => p - q), b = cap(nums(y0 || ""), 7).sort((p, q) => p - q);
@@ -22,27 +23,28 @@
       let tail = "d", i = 0, j = 0;
       const rest = (xs, k, on) => xs.slice(k).map((v, q) => (q === 0 && on ? { v, cls: "hit" } : v));
       const P = (on) => [chips("t1 (list 1)", rest(a, i, on)), chips("t2 (list 2)", rest(b, j, on)), { t: "list", nodes, next, ptr: { tail } }];
-      fr.push(F(0, "A dummy node sits in front of the answer, so attaching the first real node needs no special case.", P(false)));
+      fr.push(F(1, "A dummy node (−1) sits in front of the answer and tail starts on it, so attaching the first real node needs no special case.", P(false)));
       while (i < a.length && j < b.length) {
-        fr.push(F(1, `Compare the fronts: ${a[i]} vs ${b[j]}`, P(true)));
+        fr.push(F(3, `Both lists still have nodes. Compare the fronts: t1 = ${a[i]} vs t2 = ${b[j]}. The smaller one goes next.`, P(true)));
         const takeA = a[i] <= b[j], v = takeA ? a[i] : b[j], id = takeA ? "a" + i : "b" + j;
         nodes.push({ id, label: v, cls: "act" }); next[tail] = id; next[id] = null;
         if (takeA) i++; else j++;
-        fr.push(F(takeA ? 2 : 3, `${v} is smaller${takeA && a[i - 1] === b[j] ? " (tie → take list 1, keeps it stable)" : ""}: tail.next = that node`, P(false)));
+        fr.push(F(takeA ? 4 : 7, `${v} is smaller${takeA && a[i - 1] === b[j] ? " (a tie, so we take list 1: that keeps equal values in order)" : ""}: tail.next = that node, and ${takeA ? "t1" : "t2"} moves to its next node.`, P(false)));
         nodes[nodes.length - 1].cls = ""; tail = id;
-        fr.push(F(4, "Move tail to the node we just attached", P(false)));
+        fr.push(F(9, `Move tail onto ${v}, the node we just attached, so the next node links after it.`, P(false)));
       }
       const left = i < a.length ? a.slice(i).map((v, q) => ({ id: "a" + (i + q), label: v })) : b.slice(j).map((v, q) => ({ id: "b" + (j + q), label: v }));
       left.forEach((n, q) => { n.cls = "found"; nodes.push(n); next[q ? left[q - 1].id : tail] = n.id; next[n.id] = null; });
       i = a.length; j = b.length;
-      fr.push(F(5, left.length ? `One list is empty. The other's remaining ${left.length} node(s) are already sorted, so a single link attaches them all.` : "Both lists are used up.", P(false)));
-      fr.push(F(6, "Return dummy.next. O(N + M) time and O(1) extra space: we only re-link existing nodes.", [{ t: "list", nodes: nodes.map((n) => ({ ...n, cls: n.id === "d" ? "dim" : "done" })), next, ptr: { head: next.d } }]));
+      fr.push(F(10, left.length ? `One list is empty. The other's remaining ${left.length} node(s) are already sorted, so a single link attaches them all.` : "Both lists are used up.", P(false)));
+      fr.push(F(11, "Return dummy.next (skip the dummy). O(N + M) time and O(1) extra space: we only re-link existing nodes.", [{ t: "list", nodes: nodes.map((n) => ({ ...n, cls: n.id === "d" ? "dim" : "done" })), next, ptr: { head: next.d } }]));
       return fr;
     } };
 
   A.lin_lru = { title: "LRU cache: HashMap + doubly linked list", inputLabel: "capacity | ops (s1=3 sets key 1, g2 gets key 2)", input: "4 | s1=3 s2=5 s4=7 s15=3 g2 s2=10 s8=9 s1=20 g2 g4",
     presets: [["Notes trace, capacity 4", "4 | s1=3 s2=5 s4=7 s15=3 g2 s2=10 s8=9 s1=20 g2 g4"], ["Notes trace, capacity 2", "2 | s1=10 s5=12 g5 g1 g10 s6=14 g5"]],
-    code: ["get(key):", "    if key not in map: return -1                 # MISS", "    remove(node); addToTail(node); return node.val  # HIT, now most recent", "set(key, val):", "    if key in map: node.val = val; remove(node); addToTail(node); return", "    if size == cap: evict head.next (LRU) from list and map", "    node = Node(key, val); map[key] = node; addToTail(node)"],
+    about: "Each step runs one get or set. The list runs from least recent (just after H) to most recent (just before T); the grid is the HashMap that finds any node in O(1). Green = hit, red = evicted.",
+    code: ["def get(key):", "    if key not in mp:", "        return -1              # MISS", "    move_to_tail(mp[key])      # HIT: unlink, re-add before T", "    return mp[key].val", "def put(key, val):", "    if key in mp:", "        mp[key].val = val", "        move_to_tail(mp[key])  # now most recent", "        return", "    if len(mp) == cap:", "        evict(head.next)       # LRU: unlink + del mp[its key]", "    mp[key] = Node(key, val)", "    add_to_tail(mp[key])"],
     gen(s) {
       const [c0, o0] = split2(s); const capN = Math.max(1, Math.min(6, nums(c0)[0] || 2));
       const ops = cap(String(o0 || "").split(/[\s,]+/).filter(Boolean), 14, "operations"), val = {}, order = [], fr = [];
@@ -60,14 +62,14 @@
         let m = /^s(-?\d+)[=:](-?\d+)$/i.exec(op), g = /^g(-?\d+)$/i.exec(op);
         if (m) {
           const k = String(+m[1]), v = +m[2], name = `set(${k},${v})`;
-          if (k in val) { val[k] = v; order.splice(order.indexOf(k), 1); order.push(k); fr.push(F(4, `${name}: key exists → update the value and move it next to T (most recent). Size does not change.`, P(k, "act", name, "updated"))); continue; }
-          if (order.length === capN) { const ev = order[0]; fr.push(F(5, `${name}: cache full. Evict the LRU node right after H: key ${ev}. The node stores its key so we can delete it from the map too.`, P(ev, "bad", name, "evict " + ev))); order.shift(); delete val[ev]; }
-          val[k] = v; order.push(k); fr.push(F(6, `${name}: new node added before T and stored in the map.`, P(k, "act", name, "inserted")));
+          if (k in val) { val[k] = v; order.splice(order.indexOf(k), 1); order.push(k); fr.push(F(8, `${name}: key exists → update the value and move it next to T (most recent). Size does not change.`, P(k, "act", name, "updated"))); continue; }
+          if (order.length === capN) { const ev = order[0]; fr.push(F(11, `${name}: cache full (${capN} keys). Evict the LRU node right after H: key ${ev}. The node stores its key so we can delete it from the map too.`, P(ev, "bad", name, "evict " + ev))); order.shift(); delete val[ev]; }
+          val[k] = v; order.push(k); fr.push(F(13, `${name}: a new node is stored in the map and added just before T, so it is the most recent.`, P(k, "act", name, "inserted")));
         } else if (g) {
           const k = String(+g[1]), name = `get(${k})`;
-          if (!(k in val)) { fr.push(F(1, `${name}: not in the map → MISS, return −1`, P(null, "", name, "-1 (MISS)"))); continue; }
+          if (!(k in val)) { fr.push(F(2, `${name}: key ${k} is not in the map → MISS, return −1. Nothing moves.`, P(null, "", name, "-1 (MISS)"))); continue; }
           order.splice(order.indexOf(k), 1); order.push(k);
-          fr.push(F(2, `${name}: HIT → return ${val[k]}. Unlink the node (O(1) with prev/next) and re-add it before T.`, P(k, "found", name, val[k] + " (HIT)")));
+          fr.push(F(3, `${name}: HIT → return ${val[k]}. Unlink the node (O(1) with prev/next) and re-add it before T.`, P(k, "found", name, val[k] + " (HIT)")));
         } else throw new Error(`Unknown op "${op}". Use s<key>=<val> or g<key>.`);
       }
       fr.push(F(-1, "Every get and set is O(1): the map finds the node, and the doubly linked list unlinks and re-links it with a few pointer writes.", P(null, "", "done", "-")));
@@ -76,75 +78,83 @@
 
   A.lin_postfix = { title: "Stack: evaluate a postfix expression", inputLabel: "tokens", input: "3 5 + 2 - 2 5 * -",
     presets: [["Notes example", "3 5 + 2 - 2 5 * -"], ["(2+1)*3", "2 1 + 3 *"], ["Division order", "4 13 5 / +"]],
-    code: ["for tok in tokens:", "    if tok in '+-*/':", "        op2 = pop()          # RIGHT operand comes off first", "        op1 = pop()          # then the LEFT operand", "        push(op1 tok op2)", "    else: push(int(tok))", "return top()"],
+    about: "Tokens are read left to right (the highlighted cell). Numbers are pushed; an operator pops its two operands, right one first, and pushes the result. The stack's top is on the right.",
+    code: ["for tok in tokens:", "    if tok in '+-*/':", "        op2 = st.pop()         # RIGHT operand comes off first", "        op1 = st.pop()         # then the LEFT operand", "        st.append(apply(tok, op1, op2))", "    else:", "        st.append(int(tok))", "return st[-1]"],
     gen(s) {
       const tk = cap(String(s).trim().split(/\s+/).filter(Boolean), 15, "tokens"), st = [], fr = [];
       tk.forEach((t, i) => {
         if (["+", "-", "*", "/"].includes(t)) {
           if (st.length < 2) throw new Error(`Not a valid postfix expression: '${t}' needs two operands.`);
-          const op2 = st.pop(), op1 = st.pop();
-          fr.push(F(3, `'${t}': pop op2 = <b>${op2}</b> (right), then op1 = <b>${op1}</b> (left)`, [arr(tk, { hl: { [i]: "act" } }), chips("stack (top →)", st.slice())]));
+          const op2 = st.pop();
+          fr.push(F(2, `'${t}' is an operator. The first pop is the RIGHT operand: op2 = <b>${op2}</b>.`, [arr(tk, { hl: { [i]: "act" } }), chips("stack (top →)", st.slice())]));
+          const op1 = st.pop();
+          fr.push(F(3, `The second pop is the LEFT operand: op1 = <b>${op1}</b>. So we compute ${op1} ${t} ${op2}, not ${op2} ${t} ${op1}.`, [arr(tk, { hl: { [i]: "act" } }), chips("stack (top →)", st.slice())]));
           if (t === "/" && op2 === 0) throw new Error("Division by zero.");
           const r = t === "+" ? op1 + op2 : t === "-" ? op1 - op2 : t === "*" ? op1 * op2 : Math.trunc(op1 / op2);
           st.push(r);
-          fr.push(F(4, `${op1} ${t} ${op2} = ${r}. Push the result.`, [arr(tk, { hl: { [i]: "done" } }), chips("stack (top →)", topHit(st))]));
+          fr.push(F(4, `${op1} ${t} ${op2} = ${r}. Push the result: it becomes an operand for a later operator.`, [arr(tk, { hl: { [i]: "done" } }), chips("stack (top →)", topHit(st))]));
         } else {
           const v = Number(t); if (Number.isNaN(v)) throw new Error(`Unknown token '${t}'.`);
-          st.push(v); fr.push(F(5, `${t} is a number: push it`, [arr(tk, { hl: { [i]: "act" } }), chips("stack (top →)", topHit(st))]));
+          st.push(v); fr.push(F(6, `${t} is a number: push it and wait for an operator.`, [arr(tk, { hl: { [i]: "act" } }), chips("stack (top →)", topHit(st))]));
         }
       });
-      fr.push(F(6, st.length === 1 ? `One value left: the answer is <b>${st[0]}</b>. O(N) time, O(N) space.` : `${st.length} values left on the stack, so the expression was not valid postfix.`, [arr(tk), chips("stack (top →)", topHit(st))]));
+      fr.push(F(7, st.length === 1 ? `One value left: the answer is <b>${st[0]}</b>. O(N) time, O(N) space.` : `${st.length} values left on the stack, so the expression was not valid postfix.`, [arr(tk), chips("stack (top →)", topHit(st))]));
       return fr;
     } };
 
   A.lin_histogram = { title: "Largest rectangle in a histogram (nearest smaller on both sides)", inputLabel: "bar heights", input: "2 1 5 6 2 3",
     presets: [["LeetCode example", "2 1 5 6 2 3"], ["Notes, 20 bars", "2 1 4 7 5 2 1 3 4 5 6 4 3 2 3 1 5 6 4 2"], ["All equal", "3 3 3 3"]],
-    code: ["nsl[i] = index of nearest smaller bar on the LEFT  (-1 if none)", "nsr[i] = index of nearest smaller bar on the RIGHT (N if none)", "for i in 0..N-1:", "    area = h[i] * (nsr[i] - nsl[i] - 1)", "    ans = max(ans, area)"],
+    about: "Pass 1 fills nsl (nearest smaller bar on the left) with a stack of indices, pass 2 fills nsr the same way from the right, and pass 3 treats each bar as the shortest bar of a rectangle. The shaded box is that rectangle.",
+    code: ["for i in range(n):                    # pass 1: left to right", "    while st and h[st[-1]] >= h[i]:", "        st.pop()                      # taller bars can't be nsl again", "    nsl[i] = st[-1] if st else -1", "    st.append(i)", "# pass 2: the same from right to left fills nsr (N if none)", "for i in range(n):                    # pass 3", "    area = h[i] * (nsr[i] - nsl[i] - 1)", "    ans = max(ans, area)", "return ans"],
     gen(s) {
       const h = cap(nums(s), 20, "bars"), n = h.length, fr = [], nsl = Array(n).fill(""), nsr = Array(n).fill("");
       if (!n) throw new Error("Enter some bar heights.");
       const bars = (hl) => ({ t: "bars", vals: h, hl });
       let st = [];
       for (let i = 0; i < n; i++) {
-        while (st.length && h[st[st.length - 1]] >= h[i]) st.pop();
-        nsl[i] = st.length ? st[st.length - 1] : -1; st.push(i);
-        fr.push(F(0, `Bar ${i} (h=${h[i]}): pop bars that are ≥ it. Nearest smaller on the left: <b>${nsl[i]}</b>`, [bars({ [i]: "act", [nsl[i]]: "found" }), arr(nsl, { label: "nsl" }), chips("stack (indices)", st.slice())]));
+        const popped = [];
+        while (st.length && h[st[st.length - 1]] >= h[i]) popped.push(st.pop());
+        if (popped.length) fr.push(F(2, `Bar ${i} (h=${h[i]}): pop index ${popped.join(", ")} (height ≥ ${h[i]}). Bar ${i} is nearer and not taller, so they can never be a nearest smaller bar again.`, [bars({ [i]: "act" }), arr(nsl, { label: "nsl" }), chips("stack (indices)", st.slice())]));
+        nsl[i] = st.length ? st[st.length - 1] : -1;
+        fr.push(F(3, `Bar ${i} (h=${h[i]}): ${nsl[i] < 0 ? "the stack is empty, so no smaller bar on the left: nsl = −1" : `the top of the stack is index ${nsl[i]} (h=${h[nsl[i]]}, smaller than ${h[i]}): nsl = <b>${nsl[i]}</b>`}. Then push ${i}.`, [bars({ [i]: "act", [nsl[i]]: "found" }), arr(nsl, { label: "nsl" }), chips("stack (indices)", st.slice())]));
+        st.push(i);
       }
       st = [];
       for (let i = n - 1; i >= 0; i--) {
         while (st.length && h[st[st.length - 1]] >= h[i]) st.pop();
         nsr[i] = st.length ? st[st.length - 1] : n; st.push(i);
-        fr.push(F(1, `Bar ${i} (h=${h[i]}), scanning right to left. Nearest smaller on the right: <b>${nsr[i]}</b>`, [bars({ [i]: "act", [nsr[i]]: "found" }), arr(nsl, { label: "nsl" }), arr(nsr, { label: "nsr" }), chips("stack (indices)", st.slice())]));
+        fr.push(F(5, `Pass 2, right to left. Bar ${i} (h=${h[i]}): nearest smaller on the right is <b>${nsr[i]}</b>${nsr[i] === n ? " (none, so N)" : ""}.`, [bars({ [i]: "act", [nsr[i]]: "found" }), arr(nsl, { label: "nsl" }), arr(nsr, { label: "nsr" }), chips("stack (indices)", st.slice())]));
       }
       let best = -1, bi = 0;
       for (let i = 0; i < n; i++) {
         const w = nsr[i] - nsl[i] - 1, area = h[i] * w, hl = {};
         for (let k = nsl[i] + 1; k < nsr[i]; k++) hl[k] = "cmp"; hl[i] = "act";
         const better = area > best; if (better) { best = area; bi = i; }
-        fr.push(F(better ? 4 : 3, `Bar ${i} as the shortest bar: it stretches over ${nsl[i] + 1}..${nsr[i] - 1}, width ${w}, area ${h[i]} × ${w} = <b>${area}</b>${better ? " (new best)" : ""}`, [{ ...bars(hl), rect: { l: nsl[i] + 1, r: nsr[i] - 1, h: h[i], cls: better ? "area" : "" } }, arr(nsl, { label: "nsl" }), arr(nsr, { label: "nsr" }), vars({ best })]));
+        fr.push(F(better ? 8 : 7, `Bar ${i} as the shortest bar: it stretches over ${nsl[i] + 1}..${nsr[i] - 1}, width ${w}, area ${h[i]} × ${w} = <b>${area}</b>${better ? " (new best)" : ""}`, [{ ...bars(hl), rect: { l: nsl[i] + 1, r: nsr[i] - 1, h: h[i], cls: better ? "area" : "" } }, arr(nsl, { label: "nsl" }), arr(nsr, { label: "nsr" }), vars({ best })]));
       }
       const hl = {}; for (let k = nsl[bi] + 1; k < nsr[bi]; k++) hl[k] = "found";
-      fr.push(F(4, `Largest rectangle: height ${h[bi]} over bars ${nsl[bi] + 1}..${nsr[bi] - 1}, area <b>${best}</b>. O(N): every index is pushed and popped once per pass.`, [{ ...bars(hl), rect: { l: nsl[bi] + 1, r: nsr[bi] - 1, h: h[bi], cls: "area" } }, vars({ answer: best })]));
+      fr.push(F(9, `Largest rectangle: height ${h[bi]} over bars ${nsl[bi] + 1}..${nsr[bi] - 1}, area <b>${best}</b>. O(N): every index is pushed and popped once per pass.`, [{ ...bars(hl), rect: { l: nsl[bi] + 1, r: nsr[bi] - 1, h: h[bi], cls: "area" } }, vars({ answer: best })]));
       return fr;
     } };
 
   A.lin_twoStackQueue = { title: "Queue using two stacks (IN and OUT)", inputLabel: "ops (e10 = enqueue 10, d = dequeue)", input: "e10 e20 e30 d e40 d d e50 d d",
-    code: ["enqueue(x): IN.push(x)", "dequeue():", "    if OUT is empty:", "        while IN: OUT.push(IN.pop())    # pour: reverses the order", "    if OUT is empty: return -1", "    return OUT.pop()"],
+    about: "New elements go on the IN stack. Dequeues are served from the OUT stack; only when OUT is empty is IN poured into it, which reverses the order so the oldest element is on top. Stack tops are on the right.",
+    code: ["def enqueue(x):", "    IN.append(x)", "def dequeue():", "    if not OUT:", "        while IN:                  # pour: reverses the order", "            OUT.append(IN.pop())", "    if not OUT:", "        return -1", "    return OUT.pop()"],
     gen(s) {
       const ops = cap(String(s).trim().split(/[\s,]+/).filter(Boolean), 16, "operations"), inS = [], outS = [], got = [], fr = []; let moves = 0;
       const P = (outTop) => [chips("IN stack (top →)", topHit(inS)), chips("OUT stack (top →)", outTop ? topHit(outS) : outS.slice()), chips("dequeued, in order", got.slice()), vars({ "elements moved IN→OUT": moves })];
       fr.push(F(-1, "Two empty stacks. IN receives new elements, OUT serves dequeues.", P(false)));
       for (const op of ops) {
         const e = /^e(-?\d+)$/i.exec(op);
-        if (e) { inS.push(+e[1]); fr.push(F(0, `enqueue(${e[1]}): push onto IN. O(1).`, P(false))); continue; }
+        if (e) { inS.push(+e[1]); fr.push(F(1, `enqueue(${e[1]}): push onto IN. O(1), and OUT is not touched.`, P(false))); continue; }
         if (!/^d$/i.test(op)) throw new Error(`Unknown op "${op}". Use e<number> or d.`);
         if (!outS.length) {
-          fr.push(F(2, "dequeue(): OUT is empty, so pour everything from IN into OUT.", P(false)));
-          while (inS.length) { outS.push(inS.pop()); moves++; fr.push(F(3, `Move ${outS[outS.length - 1]} from IN to OUT. The oldest element ends up on top of OUT.`, P(true))); }
+          fr.push(F(3, "dequeue(): OUT is empty, so pour everything from IN into OUT.", P(false)));
+          while (inS.length) { outS.push(inS.pop()); moves++; fr.push(F(5, `Move ${outS[outS.length - 1]} from IN to OUT. The oldest element ends up on top of OUT.`, P(true))); }
         }
-        if (!outS.length) { fr.push(F(4, "Both stacks are empty: return −1.", P(false))); continue; }
-        fr.push(F(5, `dequeue(): pop ${outS[outS.length - 1]} from OUT (oldest first: FIFO).`, P(true)));
-        got.push(outS.pop()); fr.push(F(5, `Returned ${got[got.length - 1]}.`, P(false)));
+        if (!outS.length) { fr.push(F(7, "Both stacks are empty: nothing to dequeue, return −1.", P(false))); continue; }
+        fr.push(F(8, `dequeue(): OUT is not empty, so pop its top, ${outS[outS.length - 1]}: the oldest element still waiting (FIFO).`, P(true)));
+        got.push(outS.pop()); fr.push(F(8, `Returned ${got[got.length - 1]}. Elements left in OUT stay there for the next dequeues.`, P(false)));
       }
       fr.push(F(-1, "Each element is pushed to IN once, moved once and popped once. One dequeue can cost O(N), but the total is O(1) amortized per operation.", P(false)));
       return fr;
@@ -152,7 +162,8 @@
 
   A.lin_median = { title: "Median of a stream with two heaps", inputLabel: "stream", input: "6 3 8 11 20 2 10 8 13 50",
     presets: [["Notes example 2", "6 3 8 11 20 2 10 8 13 50"], ["Notes example 1", "6 3 8 11 2"], ["Flipkart delivery times", "3 7 15 2 5 8"]],
-    code: ["for x in stream:", "    if h1 empty or x <= h1.max: h1.push(x)   else: h2.push(x)", "    if |size(h1) - size(h2)| > 1: move the bigger heap's top across", "    median = top of the bigger heap, or (h1.max + h2.min) / 2"],
+    about: "Each number of the stream joins one of two heaps: h1 holds the smaller half (max on top) and h2 the larger half (min on top). The highlighted chip is each heap's top; the tops straddle the middle, so the median is read from them.",
+    code: ["for x in stream:", "    if not h1 or x <= h1.top():", "        h1.push(x)                 # smaller half (max-heap)", "    else:", "        h2.push(x)                 # larger half (min-heap)", "    if len(h1) > len(h2) + 1:", "        h2.push(h1.pop())          # rebalance", "    elif len(h2) > len(h1) + 1:", "        h1.push(h2.pop())", "    if len(h1) == len(h2):", "        median = (h1.top() + h2.top()) / 2", "    else:", "        median = h1.top() if len(h1) > len(h2) else h2.top()"],
     gen(s) {
       const v = cap(nums(s), 12), h1 = [], h2 = [], med = [], fr = [];
       const P = (i) => [arr(v, { hl: i == null ? {} : { [i]: "act" }, idx: false }), chips("h1 max-heap · smaller half (top first)", [...h1].sort((p, q) => q - p).map((x, q) => (q ? x : { v: x, cls: "hit" }))), chips("h2 min-heap · larger half (top first)", [...h2].sort((p, q) => p - q).map((x, q) => (q ? x : { v: x, cls: "hit" }))), chips("medians", med.slice())];
@@ -160,15 +171,15 @@
       v.forEach((x, i) => {
         const left = !h1.length || x <= Math.max(...h1);
         (left ? h1 : h2).push(x);
-        fr.push(F(1, `${x} ${left ? (h1.length === 1 ? "→ h1 (h1 was empty)" : "≤ h1's top → goes to h1 (smaller half)") : "> h1's top → goes to h2 (larger half)"}`, P(i)));
+        fr.push(F(left ? 2 : 4, `${x} ${left ? (h1.length === 1 ? "→ h1 (h1 was empty)" : "≤ h1's top → goes to h1 (smaller half)") : "> h1's top → goes to h2 (larger half)"}`, P(i)));
         if (Math.abs(h1.length - h2.length) > 1) {
           const fromH1 = h1.length > h2.length, t = take(fromH1 ? h1 : h2, fromH1);
           (fromH1 ? h2 : h1).push(t);
-          fr.push(F(2, `Sizes differ by 2: move ${t} from ${fromH1 ? "h1 to h2" : "h2 to h1"}`, P(i)));
+          fr.push(F(fromH1 ? 6 : 8, `Sizes differ by 2, so the halves are unbalanced: move ${fromH1 ? "h1's top" : "h2's top"} ${t} to ${fromH1 ? "h2" : "h1"}.`, P(i)));
         }
         const m = h1.length > h2.length ? Math.max(...h1) : h2.length > h1.length ? Math.min(...h2) : (Math.max(...h1) + Math.min(...h2)) / 2;
         med.push(m);
-        fr.push(F(3, `Median so far = <b>${m}</b>${h1.length === h2.length ? " (even count: average of both tops)" : " (odd count: top of the bigger heap)"}`, P(i)));
+        fr.push(F(h1.length === h2.length ? 10 : 12, `Median so far = <b>${m}</b>${h1.length === h2.length ? " (even count: average of both tops)" : " (odd count: top of the bigger heap)"}`, P(i)));
       });
       fr.push(F(-1, "O(log N) per number: one push, at most one move. The tops always straddle the middle.", P(null)));
       return fr;
@@ -177,7 +188,8 @@
   const heapTree = (h, hl = {}) => ({ t: "tree", nodes: h.map((v, i) => ({ id: i, label: v, parent: i ? (i - 1) >> 1 : null, side: i ? (i % 2 ? "L" : "R") : null, cls: hl[i] || "" })) });
   A.lin_buildHeap = { title: "Build a min-heap bottom-up in O(N)", inputLabel: "array", input: "7 3 5 1 6 8 10 2 13 14 -2",
     presets: [["Notes worked example", "7 3 5 1 6 8 10 2 13 14 -2"], ["Notes build-heap problem", "5 13 -2 11 27 31 0 19"]],
-    code: ["for i = (n-2)//2 down to 0:      # last non-leaf → root", "    heapify(i):                  # sift down", "        m = smallest of a[i], a[2i+1], a[2i+2]", "        if m == i: stop", "        swap(a[i], a[m]); i = m"],
+    about: "The tree and the array are the same heap. Green nodes already form valid heaps. Starting at the last non-leaf and moving back to the root, each node is sifted down until it is smaller than both children.",
+    code: ["for i in range((n - 2) // 2, -1, -1):  # last non-leaf to root", "    j = i                                # sift a[i] down", "    while 2 * j + 1 < n:", "        l, r, m = 2 * j + 1, 2 * j + 2, j", "        if a[l] < a[m]:", "            m = l", "        if r < n and a[r] < a[m]:      # check r < n first", "            m = r", "        if m == j:", "            break", "        a[j], a[m] = a[m], a[j]", "        j = m"],
     gen(s) {
       const h = cap(nums(s), 15), n = h.length, fr = []; let swaps = 0;
       const ok = {}; for (let i = n >> 1; i < n; i++) ok[i] = "done";
@@ -186,16 +198,17 @@
       fr.push(F(0, `Leaves (indices ${n >> 1}..${n - 1}, about half the nodes) are already heaps. Start at the last non-leaf: (n−2)/2 = ${(n - 2) >> 1}.`, P({})));
       for (let i = (n - 2) >> 1; i >= 0; i--) {
         let c = i;
-        fr.push(F(1, `heapify(${i}): sift ${h[i]} down`, P({ [i]: "act" })));
+        fr.push(F(1, `Sift down index ${i} (value ${h[i]}). Everything below it is already a heap.`, P({ [i]: "act" })));
         for (;;) {
           const l = 2 * c + 1, r = l + 1; let m = c;
-          if (l < n && h[l] < h[m]) m = l;
+          if (l >= n) { fr.push(F(2, `${h[c]} (index ${c}) has no children any more: it is a leaf, so the sift stops here.`, P({ [c]: "found" }))); break; }
+          if (h[l] < h[m]) m = l;
           if (r < n && h[r] < h[m]) m = r;
-          const cm = { [c]: "act" }; if (l < n) cm[l] = "cmp"; if (r < n) cm[r] = "cmp";
-          fr.push(F(2, `Compare ${h[c]} with its children${r < n ? ` ${h[l]} and ${h[r]}` : l < n ? ` ${h[l]} (no right child: check r < n first)` : " (none)"}`, P(cm)));
-          if (m === c) { fr.push(F(3, `${h[c]} is the smallest: stop`, P({ [c]: "found" }))); break; }
+          const cm = { [c]: "act", [l]: "cmp" }; if (r < n) cm[r] = "cmp";
+          fr.push(F(r < n ? 6 : 4, `Compare ${h[c]} with its children ${r < n ? `${h[l]} and ${h[r]}` : `${h[l]} (no right child: r < n is false, so a[r] is never read)`}. Smallest: ${h[m]}.`, P(cm)));
+          if (m === c) { fr.push(F(9, `${h[c]} is already ≤ its children: this subtree is a heap, stop.`, P({ [c]: "found" }))); break; }
           [h[c], h[m]] = [h[m], h[c]]; swaps++;
-          fr.push(F(4, `Swap ${h[m]} down, ${h[c]} up`, P({ [c]: "swap", [m]: "swap" })));
+          fr.push(F(10, `Swap: ${h[c]} moves up to index ${c}, ${h[m]} moves down to index ${m}. Keep sifting from there.`, P({ [c]: "swap", [m]: "swap" })));
           c = m;
         }
         for (let k = i; k < n; k++) ok[k] = "done";
@@ -206,7 +219,8 @@
 
   A.lin_maxXor = { title: "Binary trie: maximum XOR of a pair", inputLabel: "non-negative numbers", input: "5 20 15 10 25 30",
     presets: [["Notes example 2", "5 20 15 10 25 30"], ["Notes example 1", "9 8 10 7"]],
-    code: ["for x in A: insert bits of x, MSB first (0 = left, 1 = right)", "for x in A:", "    for j = L-1 down to 0:", "        b = bit j of x; want 1-b (the 'demand' bit)", "        if child[1-b] exists: xr |= 1 << j; go there   # ✓", "        else: go to child[b]                            # ✗", "    ans = max(ans, xr)"],
+    about: "First every number is inserted as an L-bit path (0 = left, 1 = right). Then each number walks the trie from the top bit, taking the opposite bit whenever that child exists. The bit rows show x, the demanded bits, and the XOR built so far.",
+    code: ["for x in A:", "    insert(root, x)              # bits MSB first: 0 left, 1 right", "for x in A:", "    curr, xr = root, 0", "    for j in range(L - 1, -1, -1):", "        b = (x >> j) & 1           # we demand 1 - b", "        if curr.child[1 - b]:", "            xr |= 1 << j           # ✓ this XOR bit is 1", "            curr = curr.child[1 - b]", "        else:", "            curr = curr.child[b]   # ✗ this XOR bit is 0", "    ans = max(ans, xr)"],
     gen(s) {
       const a = cap(nums(s).map((x) => Math.abs(Math.trunc(x))), 7);
       if (!a.length) throw new Error("Enter some numbers.");
@@ -221,7 +235,7 @@
           cur = kid[cur][b]; path.push(cur);
         }
         nodes[cur].tag = String(x);
-        fr.push(F(0, `Insert ${x} = ${x.toString(2).padStart(L, "0")} as a ${L}-bit path`, [tree(path, "act")]));
+        fr.push(F(1, `Insert ${x} = ${x.toString(2).padStart(L, "0")} as a ${L}-bit path`, [tree(path, "act")]));
       });
       a.forEach((x) => {
         let cur = 0, xr = 0; const path = [0];
@@ -229,10 +243,10 @@
           const b = (x >> j) & 1, want = 1 - b, okBit = kid[cur][want] != null;
           if (okBit) { xr |= 1 << j; cur = kid[cur][want]; } else cur = kid[cur][b];
           path.push(cur);
-          fr.push(F(okBit ? 4 : 5, `x = ${x}, bit ${j}: x has ${b}, we demand ${want}. ${okBit ? "Child exists ✓, so this XOR bit is 1." : "Missing ✗, so we follow " + b + " and this XOR bit is 0."}`, [tree(path, okBit ? "found" : "act"), { t: "bits", width: L, rows: [{ label: "x", n: x, hlBit: j }, { label: "demand", n: ~x & mask, hlBit: j }, { label: "xor", n: xr, hlBit: j }] }]));
+          fr.push(F(okBit ? 7 : 10, `x = ${x}, bit ${j}: x has ${b}, we demand ${want}. ${okBit ? "Child exists ✓, so this XOR bit is 1." : "Missing ✗, so we follow " + b + " and this XOR bit is 0."}`, [tree(path, okBit ? "found" : "act"), { t: "bits", width: L, rows: [{ label: "x", n: x, hlBit: j }, { label: "demand", n: ~x & mask, hlBit: j }, { label: "xor", n: xr, hlBit: j }] }]));
         }
         const partner = nodes[cur].tag; if (xr > ans) { ans = xr; bestPair = `${x} ^ ${partner}`; }
-        fr.push(F(6, `Best partner for ${x} is ${partner}: ${x} ^ ${partner} = <b>${xr}</b>. Best so far: ${ans}${bestPair ? " (" + bestPair + ")" : ""}`, [tree(path, "found"), vars({ ans })]));
+        fr.push(F(11, `Best partner for ${x} is ${partner}: ${x} ^ ${partner} = <b>${xr}</b>. Best so far: ${ans}${bestPair ? " (" + bestPair + ")" : ""}`, [tree(path, "found"), vars({ ans })]));
       });
       fr.push(F(-1, `Maximum XOR = <b>${ans}</b>${bestPair ? " (" + bestPair + ")" : ""}. O(N·L) time instead of O(N²) pairs.`, [tree([], ""), vars({ ans, L })]));
       return fr;

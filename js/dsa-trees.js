@@ -29,7 +29,7 @@
   const LCA_T = "11 8 18 3 9 13 19 -1 12 14 25 16 50";
   A.tg_bstLCA = { title: "LCA in a BST: walk down until the two values split", inputLabel: "BST insert order | a b", input: LCA_T + " | 14 25",
     presets: [["LCA(14, 25)", LCA_T + " | 14 25"], ["LCA(12, 16)", LCA_T + " | 12 16"], ["LCA(12, 13)", LCA_T + " | 12 13"]],
-    about: "One cursor walks down from the root. At each node it asks: are both values smaller (go left), both larger (go right), or do they split here? Orange nodes are the two targets, green is the path so far.",
+    about: "One cursor walks down from the root. At each node it asks: are both values smaller (go left), both larger (go right), or do they split here? The two targets are orange, the current node blue, and the path walked so far green.",
     code: ["curr = root", "while curr:", "    if a < curr.val and b < curr.val:", "        curr = curr.left            # both smaller: go left", "    elif a > curr.val and b > curr.val:", "        curr = curr.right           # both larger: go right", "    else:", "        return curr                 # they split here (or one is curr)"],
     gen(s) { const [v0, q0] = split2(s); const nodes = bstFrom(cap(nums(v0), 15)); const [a, b] = nums(q0 || "");
       if (!nodes.length) throw new Error("Give some values to insert.");
@@ -81,7 +81,7 @@
   /* ═════════ NEW ANIMATIONS: GRAPHS ═════════ */
   A.tg_multiBFS = { title: "Multi-source BFS: all sources start in the queue together", inputLabel: "rows split by |  (H or 2 = source, R or 1 = open, # or 0 = blocked)", input: "RRRH | RRHH | RHHR",
     presets: [["Nearest hospital", "RRRH | RRHH | RHHR"], ["Rotting oranges", "211 | 110 | 011"], ["An orange never rots", "211 | 011 | 101"]],
-    about: "Every source (green) starts in the queue at distance 0. Each frame expands one whole layer (orange): the numbers are steps to the nearest source, · is not reached yet, # is blocked.",
+    about: "Every source (green) starts in the queue at distance 0. Each frame expands one whole layer (blue): the numbers are steps to the nearest source, · is not reached yet, # is blocked.",
     code: ["q = deque()", "for i, j in all_cells:", "    if is_source(i, j):", "        dist[i][j] = 0              # every source starts at 0", "        q.append((i, j))", "while q:", "    i, j = q.popleft()", "    for a, b in neighbours4(i, j):", "        if is_open(a, b) and dist[a][b] is None:", "            dist[a][b] = dist[i][j] + 1   # first visit = nearest", "            q.append((a, b))", "ans = max_dist(dist) if all_reached(dist) else -1"],
     gen(s) { const g = String(s).split("|").map((r) => [...r.replace(/\s+/g, "")]).filter((r) => r.length); cap(g, 7, "rows"); g.forEach((r) => cap(r, 9, "columns"));
       if (!g.length) throw new Error("Give a grid."); const R = g.length, C = g[0].length; if (g.some((r) => r.length !== C)) throw new Error("All rows need the same length.");
@@ -107,7 +107,7 @@
   const BIP = { 0: [80, 150], 1: [190, 60], 2: [300, 150], 3: [190, 240], 4: [320, 255], 5: [440, 190], 6: [450, 275], 7: [440, 60] };
   A.tg_bipartite = { title: "Bipartite check: 2-colour with DFS", inputLabel: "undirected edges among nodes 0–7, like 0-1", input: "0-1 0-3 2-1 2-3 4-3 4-5 4-6",
     presets: [["Bipartite (notes)", "0-1 0-3 2-1 2-3 4-3 4-5 4-6"], ["Odd cycle", "0-1 0-3 2-1 2-3 4-3 4-5 4-6 1-3"], ["Two components", "0-1 1-2 5-6 6-7 5-7"]],
-    about: "DFS gives every newly reached node the opposite colour of the node it came from (A or B tag). Green edges already cross between the two sets; an edge whose two ends share a colour (red) proves an odd cycle.",
+    about: "DFS gives every newly reached node the opposite colour of the node it came from (blue = A, pink = B). Thick edges already cross between the two sets; two red nodes joined by an edge share a colour, which proves an odd cycle.",
     code: ["col = [-1] * N", "def dfs(u):", "    for v in graph[u]:", "        if col[v] == col[u]:", "            return False            # same colour on an edge", "        if col[v] == -1:", "            col[v] = 1 - col[u]     # opposite colour", "            if not dfs(v):", "                return False", "    return True", "for i in range(N):", "    if col[i] == -1:", "        col[i] = 0                  # new component starts as A", "        if not dfs(i):", "            return False", "return True"],
     gen(s) { const es = cap(String(s).split(/\s+/).filter(Boolean).map((e) => e.split("-").map(Number)), 12, "edges");
       es.forEach(([a, b]) => { if (!(a in BIP) || !(b in BIP) || a === b) throw new Error("Use edges between different nodes 0–7, like 0-1"); });
@@ -125,7 +125,7 @@
       return fr; } };
 
   A.tg_kruskal = { title: "Kruskal's MST: sorted edges + DSU cycle check", inputLabel: null, input: "",
-    about: "Edges are tried cheapest first (the list on the right). Green edges are taken, grey ones skipped because both ends already share a DSU root (the set tag on each node). It stops after N − 1 edges.",
+    about: "Edges are tried cheapest first (the list on the right). Thick edges are taken, faded ones skipped because both ends already share a DSU root (the set tag on each node). It stops after N − 1 edges.",
     code: ["edges = drop_self_loops_and_heavier_copies(edges)", "edges.sort(key=lambda e: e[2])", "for u, v, w in edges:", "    if find(u) == find(v):", "        continue                # already connected: would close a cycle", "    union(u, v)", "    total += w", "    used += 1", "    if used == N - 1:", "        break                   # the tree is complete"],
     gen() { const pos = { 1: [60, 150], 2: [190, 60], 3: [330, 60], 4: [190, 240], 5: [330, 240], 6: [460, 150] };
       const E = [[1, 2, 7], [1, 4, 8], [2, 3, 6], [2, 4, 3], [3, 4, 4], [3, 5, 2], [3, 6, 5], [4, 5, 3], [5, 6, 5]];
