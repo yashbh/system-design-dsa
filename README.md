@@ -50,13 +50,13 @@ Also included: a concept library (searchable, with a slide-out drawer for each c
 ## Files
 
 - `js/course/`: the HLD course, one file per lesson (`00-modules.js` holds the modules and documents the block format). Each lesson file owns all of its text, figures and charts.
-- `js/concepts-2.js`: the expanded building-block library (65 concepts, each linked to an interactive figure and its lessons).
+- `js/concepts/`: the building-block library (68 concepts in four files by category, each linked to an interactive figure and its lessons).
 - `js/figs-core.js`, `js/figs-data.js`, `js/figs-arch.js`: interactive figures; each is `BP.FIGS[name](el) → destroy`.
 - `js/images.js`: free-licensed photos from Wikimedia Commons, credited under each image.
 - `js/charts.js`: dependency-free animated SVG charts (bar, line, donut). `js/scenes.js`: animated hero illustrations built from a small parts kit (servers, databases, caches, phones, queues…); case-study scenes are generated from each architecture diagram. `js/enrich.js`: each lesson's hero illustration.
 - `css/figs.css`: styles for the figures and course pages.
-- `js/cases-new.js` + `js/sims2.js`: the YouTube, Twitter and Google Docs case studies and their labs (the Docs lab's transform is fuzz-tested for convergence).
-- `js/content.js`: case-study content (case studies, concepts, toolkit data). Add a case study by appending to `BP.CASES`.
+- `js/cases/`: one file per case study (story, requirements, estimates, design steps, deep dives, architecture, quiz). `js/sims2.js`: the YouTube, Twitter and Google Docs labs (the Docs lab's transform is fuzz-tested for convergence).
+- `js/content.js`: toolkit data (latency numbers, interview framework, cheat sheet, calculator presets). Add a case study by adding a file to `js/cases/` and a script tag in `index.html`.
 - `js/sims.js`: the eight simulations. Each one renders into a container and returns a cleanup function.
 - `js/algoviz.js`: the DSA animation engine and player (frame/panel format documented at the top). `js/algos.js`: the core algorithm library. `js/dsa-core.js`: DSA topic order and pattern table; `js/dsa-*.js`: topic content (and extra animations) per group. `css/dsa.css`: the player and DSA page styles.
 - `js/app.js`: hash router, views, the diagram/trace engine, quizzes and progress.
