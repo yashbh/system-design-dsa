@@ -4,22 +4,24 @@ Object.assign(BP.CONCEPTS, {
     name: "Message queues & logs",
     icon: "📬",
     cat: "Reliability",
-    one: "Decouple producers from consumers so slow work happens in the background.",
-    analogy: "A restaurant ticket rail: the waiter clips the order and goes back to guests; cooks pick tickets at their own pace.",
-    body: "Kafka, SQS and RabbitMQ buffer work, smooth spikes and allow retries. The user-facing path stays fast (\"enqueue and return\") while analytics, fan-out or emails run asynchronously.",
+    one: "A waiting line between two parts of a system, so one part can drop off work and move on while another part picks it up later.",
+    analogy: "A restaurant ticket rail. The waiter clips the order to the rail and goes straight back to the guests. The cooks take tickets at their own pace, and on a busy night the rail just gets longer instead of the waiter standing in the kitchen.",
+    body: "A user signs up for your app. Your code saves the account, then sends a welcome email, resizes their profile photo, updates analytics and notifies their friends. If you do all of that before replying, signup takes 3 seconds. And if the email provider is down, signup fails entirely, which is silly: the account was created fine.<br><br>A <b>message queue</b> fixes this. The signup code saves the account, drops a small message like “user 42 signed up” onto the queue, and replies in 50 ms. Separate programs called <b>consumers</b> read messages off the queue and do the slow work in the background. The code that writes messages is the <b>producer</b>. Neither side needs to know about the other, or even be running at the same time.<br><br>This buys you three things. <b>Speed</b>: users wait only for the essential part. <b>Smoothing</b>: if 10,000 signups arrive in a minute but your workers handle 2,000 a minute, the queue holds the backlog and nothing crashes. <b>Retries</b>: if sending an email fails, the message goes back on the queue and is tried again.<br><br>There are two families. Classic queues like RabbitMQ and Amazon SQS hand each message to one worker and delete it once it's done. <b>Logs</b> like Apache Kafka keep every message in order for days, so many different consumers can read the same stream at their own pace, and even replay it from the start. Instagram, WhatsApp and YouTube all lean on queues for fan-out, notifications and video processing.",
     used: ["bitly","instagram","whatsapp","youtube"],
     fig: "kafka",
-    when: "Work that doesn't need to finish before you respond: notifications, emails, analytics, fan-out.",
-    pitfalls: "At-least-once delivery means consumers must be idempotent; watch consumer lag and poison messages."
+    when: "Work that doesn't need to finish before you respond to the user, such as notifications, emails, analytics, fan-out and media processing, or any time traffic arrives in bursts faster than a downstream service can handle.",
+    pitfalls: "Most queues deliver at least once, so a message can arrive twice; consumers must be idempotent. Not watching consumer lag (how far behind workers are) lets a backlog grow silently for hours. A malformed “poison” message that crashes the consumer every time can block the queue, so move repeated failures to a dead-letter queue."
   },
 
   "store-forward": {
     name: "Store-and-forward",
     icon: "📦",
     cat: "Reliability",
-    one: "If the recipient is offline, persist the message and deliver it when they reconnect.",
-    analogy: "The post office holds your mail while you're on vacation.",
-    body: "Each user has a durable inbox queue on the server. On reconnect, the device drains it and acknowledges, then the server deletes the delivered messages.",
+    one: "If the person you're messaging is offline, the server keeps the message safely and delivers it when they come back.",
+    analogy: "The post office holding your mail while you're on holiday. Letters don't get thrown away because you weren't home; they wait in a box with your name on it until you collect them.",
+    body: "You send a WhatsApp message to a friend whose phone is switched off on a flight. The message can't reach their phone right now. Dropping it would be unacceptable, and making your phone keep retrying for 10 hours would drain your battery. So the server takes responsibility: it stores the message and forwards it later. That's store-and-forward, an idea as old as telegraph offices and email.<br><br>Here's how it typically works. Each user has a durable <b>inbox queue</b> on the server, “durable” meaning it's saved to disk and survives a server restart. When your message arrives, the server writes it into your friend's inbox and sends you one tick: “the server has it”. When your friend's phone lands and reconnects, it asks for everything waiting. The server sends the messages in order, the phone saves them and replies with an <b>acknowledgement</b> (“got messages 1 to 7”). Only then does the server delete them from the inbox and send you the second tick: delivered.<br><br>Why not delete as soon as they're sent? Because the phone might lose signal halfway through receiving. If the server deleted on send, those messages would be lost. Deleting only on acknowledgement means the worst case is a resend, which the phone can ignore using the message IDs.<br><br>Servers usually cap how long they'll hold messages. WhatsApp, for instance, has said undelivered messages are deleted from its servers after 30 days. Email (SMTP servers queue and retry), SMS centres and push notification services all use the same pattern.",
+    when: "Messaging, notifications or any delivery where the receiver may be offline or unreachable for a while, and losing the message isn't acceptable.",
+    pitfalls: "Deleting messages when they're sent instead of when the device acknowledges them loses messages on flaky connections. Storing inboxes only in memory means a server restart wipes them. Without a retention limit, inboxes of abandoned accounts grow forever. Delivering out of order unless you track a sequence number per conversation.",
     used: ["whatsapp"],
     sim: "chat"
   },
@@ -28,9 +30,11 @@ Object.assign(BP.CONCEPTS, {
     name: "Acknowledgements & delivery guarantees",
     icon: "✅",
     cat: "Reliability",
-    one: "At-least-once delivery + retries + dedupe ≈ exactly-once from the user's point of view.",
-    analogy: "Registered mail: the sender keeps resending until a signed receipt comes back.",
-    body: "Networks drop packets, so senders retry until they get an ACK. Retries cause duplicates, so every message carries a unique ID and receivers ignore IDs they've seen.",
+    one: "The receiver replies “got it” for each message; the sender retries until it hears that, and duplicates are filtered out, so the user sees each message exactly once.",
+    analogy: "Registered post: the sender keeps the receipt slip and, if no signed card comes back, sends the letter again. The recipient, seeing the same tracking number twice, just throws the duplicate away.",
+    body: "Networks lose things. A message can vanish on the way there, or it can arrive fine but the reply saying “received” can vanish on the way back. From the sender's side, both look identical: silence. This is the heart of the problem, and it leads to three possible promises.<br><br><b>At-most-once</b>: send once and never retry. No duplicates, but lost messages stay lost. Fine for a live cursor position, terrible for a bank transfer. <b>At-least-once</b>: keep resending until you get an <b>ACK</b> (an acknowledgement, a short “got it” reply). Nothing is lost, but if only the ACK was lost, the receiver gets the message twice. <b>Exactly-once</b>: what everyone wants. Over an unreliable network you can't strictly guarantee a message is <i>delivered</i> exactly once, but you can make it <i>take effect</i> exactly once.<br><br>The recipe is at-least-once delivery plus deduplication. Every message carries a unique ID, say <code>msg-8f2a</code>. The receiver remembers the IDs it has processed recently. Message arrives, is new, gets processed, ACK sent. The ACK is lost, so 2 seconds later the sender retries <code>msg-8f2a</code>. The receiver recognises the ID, skips the work, and just sends the ACK again. The user sees one message.<br><br>WhatsApp's ticks map onto this chain: one tick when the server ACKs, two when the recipient's device does. Kafka, SQS and Stripe's webhooks all deliver at least once and expect you to dedupe on the receiving side.",
+    when: "Any message or event that must not be lost: chat messages, payment events, webhooks, jobs on a queue.",
+    pitfalls: "Retrying without a stable message ID makes duplicates impossible to detect. Sending the ACK before the work is safely saved means a crash loses the message even though the sender stopped retrying. Keeping the “already seen” list forever wastes memory; keep it for longer than the longest retry window and no shorter.",
     used: ["whatsapp","stripe"],
     sim: "chat"
   },
@@ -39,23 +43,25 @@ Object.assign(BP.CONCEPTS, {
     name: "Idempotency keys",
     icon: "🔁",
     cat: "Reliability",
-    one: "Doing the same request twice has the same effect as doing it once.",
-    analogy: "An elevator button: pressing it five times still calls one elevator.",
-    body: "The client attaches a unique key to a mutating request. The server stores the key and result. A retry with the same key returns the saved result instead of charging again. This is essential when a timeout leaves you unsure whether a request succeeded.",
+    one: "A unique tag on a request that lets the server recognise a retry, so doing it twice has the same effect as doing it once.",
+    analogy: "An elevator call button. Pressing it five times in frustration still brings one elevator, not five.",
+    body: "You tap “Pay ₹2,000” in an app. The request reaches the server, the card is charged, and then your train goes into a tunnel and the reply never arrives. Your app shows a spinning wheel, then “something went wrong”. Did the payment happen? You don't know. If you tap again and the server charges again, you've paid ₹4,000. That timeout uncertainty is exactly what idempotency keys solve.<br><br>An operation is <b>idempotent</b> if repeating it changes nothing after the first time. Reading a page is naturally idempotent. Charging a card is not, so we make it so. Before the first attempt, the app generates a unique key, like <code>7f3c…a91e</code>, and sends it along with the request in a header. The server checks its records: have I seen this key? If not, it processes the payment and stores the key together with the result. If yes, it skips the work and returns the stored result.<br><br>Back to the tunnel. Your app retries with the same key. The server finds it, sees the earlier charge succeeded, and simply replies “success, charge ch_123”. One charge, and your app now knows the outcome.<br><br>Stripe made this pattern famous with its <code>Idempotency-Key</code> header and keeps keys for at least 24 hours. Payment providers, order systems and messaging apps all use it. Two details make it work. The key must identify the logical action (“pay for order 991”), not each attempt. And saving the key and the result must happen atomically, so two retries arriving at the same instant can't both slip through.",
     code: "POST /v1/charges\nIdempotency-Key: 7f3c-…-a91e",
     used: ["stripe","ticketmaster","whatsapp","gdocs"],
     sim: "stripe",
-    when: "Any mutating API that clients may retry: payments, orders, message sends.",
-    pitfalls: "Keys must be generated per logical operation (not per retry) and stored atomically with the result."
+    when: "Any API that changes something and that clients might retry after a timeout: payments, orders, bookings, message sends, account creation.",
+    pitfalls: "Generating a new key on every retry defeats the purpose; create it once per logical operation. Storing the key in a separate step from the result lets two simultaneous retries both process. Accepting the same key with a different request body (say, a different amount) should be rejected, not silently treated as a replay. Expiring keys faster than clients can retry reopens the double-charge window."
   },
 
   "e2ee": {
     name: "End-to-end encryption",
     icon: "🔐",
     cat: "Security",
-    one: "Only the sender and recipient devices hold the keys; servers relay ciphertext.",
-    analogy: "Sending a locked box through the mail: the courier carries it but can't open it.",
-    body: "WhatsApp uses the Signal Protocol. The server still routes messages and stores undelivered ones, but it can't read content. This shapes the design: no server-side search of message text, and multi-device sync is harder.",
+    one: "Messages are locked on the sender's device and can only be unlocked on the recipient's device, so even the company running the servers can't read them.",
+    analogy: "Sending a locked box through a courier. The courier carries it, stores it overnight and hands it over, but only you and the recipient have keys, so the courier can't peek inside.",
+    body: "With ordinary HTTPS, your message is encrypted between your phone and the company's server, decrypted there, then encrypted again on the way to your friend. That protects you from someone sniffing café Wi-Fi, but the company, or anyone who breaks into its servers, can read every message. <b>End-to-end encryption (E2EE)</b> removes the server from the circle of trust.<br><br>It rests on public-key cryptography. Each device creates a pair of keys: a <b>public key</b> it shares freely and a <b>private key</b> that never leaves the device. Data locked with someone's public key can only be unlocked with their private key. When Asha messages Ben, her app fetches Ben's public key from the server, they derive a shared secret, and the message is encrypted on Asha's phone. The server only ever sees scrambled bytes, called <b>ciphertext</b>.<br><br>WhatsApp uses the <b>Signal Protocol</b>, which adds a clever twist: keys keep changing with every message (the “double ratchet”). If an attacker somehow steals today's key, they still can't read last week's messages. That property is called forward secrecy.<br><br>E2EE reshapes the whole product design. The server can still route messages, store undelivered ones and see metadata such as who messaged whom and when. But it can't search message text, generate link previews server-side, or scan content. Group chats need each message encrypted for every member's device, and adding a new laptop means safely sharing keys with it. Signal, WhatsApp and iMessage are end-to-end encrypted by default.",
+    when: "Products where users expect private communication even from the service provider: messaging, calls, password managers, sensitive file sharing.",
+    pitfalls: "Forgetting that metadata (who, when, how often) is still visible to the server. Not verifying that the public key really belongs to the contact, which lets a compromised server swap in its own key; safety-number checks exist for this. Unencrypted cloud backups can quietly undo E2EE. Features like server-side search or spam scanning become much harder, so plan them up front.",
     used: ["whatsapp"]
   },
 
@@ -63,46 +69,50 @@ Object.assign(BP.CONCEPTS, {
     name: "Chaos engineering & circuit breakers",
     icon: "🐒",
     cat: "Reliability",
-    one: "Break things on purpose so you learn to survive failure; fail fast when a dependency is sick.",
-    analogy: "Fire drills (chaos) and a fuse box (circuit breaker): practice the emergency, and cut the circuit before the house burns.",
-    body: "Netflix's Chaos Monkey randomly terminates production instances. A circuit breaker stops calling a failing service after N errors and returns a fallback (for example a generic row instead of personalized picks), then probes for recovery.",
-    used: ["netflix"]
+    one: "Deliberately breaking parts of your own system to prove it survives failure, and using circuit breakers so one sick service doesn't take down the rest.",
+    analogy: "Fire drills plus a fuse box. Fire drills let you practise the emergency on a calm Tuesday instead of discovering the exits are locked during a real fire. The fuse box cuts power to one circuit before a fault burns down the whole house.",
+    body: "Every big system has hidden weaknesses: a timeout nobody set, a backup that never actually takes over, a service that quietly depends on another one. You can wait for a real outage at 3 a.m. to find them. Or you can trigger small, controlled failures in working hours, with engineers watching, and fix what breaks. That second approach is <b>chaos engineering</b>.<br><br>Netflix made it famous around 2011 with <b>Chaos Monkey</b>, a tool that randomly shuts down servers in production during business hours. If losing one server causes a visible problem, the team learns quickly and designs it away. They later added the “Simian Army”, including tools that simulated losing a whole AWS region. The method is simple: state what “healthy” looks like (say, video starts per second), predict that it won't change, inject a failure, and check whether you were right.<br><br>Chaos testing tends to expose the same weak spot: one slow dependency dragging down everything that calls it. That's where <b>circuit breakers</b> come in. If the recommendations service starts timing out, a breaker in front of it trips after a number of failures. For a while, calls fail instantly with a fallback, such as a generic “Popular on Netflix” row instead of personalised picks, and the home page still loads. After a cool-down, the breaker lets a few trial calls through to check whether the service has recovered.<br><br>The two ideas fit together: chaos experiments prove your breakers, timeouts and fallbacks actually work before customers depend on them. Gremlin and AWS Fault Injection Service offer chaos tooling as products.",
+    used: ["netflix"],
+    when: "Once a system has redundancy, timeouts and fallbacks that you believe work, and you want evidence, especially for services where downtime is expensive.",
+    pitfalls: "Running chaos experiments without good monitoring or a quick way to stop them turns a test into a real outage. Starting with huge blasts (a whole region) instead of a single instance. Adding circuit breakers without meaningful fallbacks just turns slow errors into fast errors."
   },
 
   "replication": {
     name: "Replication & quorums",
     icon: "🪞",
     cat: "Reliability",
-    one: "Store each piece of data on several machines; read/write a majority to stay consistent.",
-    analogy: "Keeping three copies of your passport in three different safes.",
-    body: "With replication factor 3 and quorum (2 of 3) reads and writes, any single node can die without losing data or availability. Tunable: favor consistency (quorum) or latency (ONE).",
+    one: "Keeping copies of the same data on several machines so that if one dies, nothing is lost and the system keeps answering.",
+    analogy: "Keeping three copies of your passport in three different safes in three different cities. A fire in one city is a bad day, not a disaster.",
+    body: "Hard drives fail, servers crash and whole data centres lose power. If your users' data lives on exactly one machine, every one of those events is an outage, and some are permanent data loss. Replication means every piece of data is stored on several machines, called <b>replicas</b>, usually three, ideally in different racks or zones.<br><br>The most common setup is <b>leader–follower</b>. All writes go to one replica, the leader, which records the change and sends it to the followers. Reads can go to any replica, so you also get more read capacity: three replicas can serve roughly three times the reads. If the leader dies, a follower is promoted. PostgreSQL, MySQL and MongoDB work this way. <b>Leaderless</b> systems like Cassandra let clients write to several replicas directly.<br><br>The big question is when to tell the user “saved”. <b>Synchronous</b>: wait until followers confirm, so no confirmed write is ever lost, but every write is as slow as the slowest replica. <b>Asynchronous</b>: confirm as soon as the leader has it, which is fast, but if the leader crashes before passing it on, those last writes are gone.<br><br><b>Quorums</b> are the middle path. With 3 replicas, require 2 to confirm each write and read from 2. Any two groups of 2 out of 3 overlap, so every read touches at least one fresh copy, and you can lose any single machine without losing data or availability. Discord's message store (Cassandra, later ScyllaDB) and Stripe's databases rely on replication like this.",
     used: ["discord","stripe"],
     fig: "replication",
-    when: "You need read scaling, high availability, or protection against losing a machine.",
-    pitfalls: "Replication lag (stale reads), data loss on async failover, and write bottlenecks on a single master."
+    when: "Whenever losing a machine must not mean losing data or going offline, and when you need more read capacity than one machine can give.",
+    pitfalls: "Reading from a follower right after writing to the leader shows users stale data (replication lag). Promoting an asynchronous follower can silently drop the last few seconds of writes. Putting all replicas in one rack or zone means one power failure takes them all. A single leader still caps write throughput; replication scales reads, not writes."
   },
 
   "rate-limiting": {
     name: "Rate limiting (token bucket)",
     icon: "🪣",
     cat: "Reliability",
-    one: "Allow bursts up to a limit, then a steady refill rate; reject the excess with HTTP 429.",
-    analogy: "An arcade token cup: you can spend a handful at once, but the attendant only refills one token per second.",
-    body: "Token bucket: capacity C, refill R/sec. Each request takes a token. Allows short bursts while bounding average rate. Often implemented in Redis with atomic scripts, per user / API key / IP.",
+    one: "Capping how many requests a user or client can make, allowing short bursts but rejecting anything above a steady rate with an HTTP 429 “too many requests” error.",
+    analogy: "An arcade token cup. You can spend a handful of tokens at once on a game you love, but the attendant only drops one new token into your cup every second. Run out, and you wait.",
+    body: "One customer's buggy script calls your API 5,000 times a second, in a loop. Your servers slow down for everyone, and the other 10,000 well-behaved customers start timing out. Or an attacker tries a million passwords on your login page. Rate limiting is the bouncer that says “that's enough from you for now”.<br><br>The most popular algorithm is the <b>token bucket</b>. Each client has a bucket that holds up to C tokens, its capacity. Tokens drip in at R per second. Every request takes one token; if the bucket is empty, the request is rejected with status 429. Say C = 10 and R = 2. A client that's been quiet has 10 tokens and can fire 10 requests instantly, a burst. After that it can sustain 2 a second, because that's how fast tokens refill. Bursts are allowed, but the long-run average is capped.<br><br>There are other algorithms too. A <b>fixed window</b> counts requests per calendar minute, which is simple, but a client can send 100 at 12:00:59 and 100 more at 12:01:00, a double burst at the boundary. A <b>sliding window</b> smooths that out. A <b>leaky bucket</b> lets requests out at a perfectly steady pace, like water dripping from a hole.<br><br>With many API servers, the counters must be shared, typically in Redis, updated with an atomic script so two servers can't both spend the last token. Limits are usually set per API key, per user or per IP address. Stripe has written about using token buckets in exactly this way, and Ticketmaster-style sales throttle bots during on-sales.",
     used: ["stripe","ticketmaster"],
     fig: "ratealgos",
-    when: "Public APIs, login endpoints, expensive operations, multi-tenant fairness.",
-    pitfalls: "Fixed windows allow 2× bursts at boundaries; distributed counters need atomic ops; decide fail-open vs fail-closed."
+    when: "Public APIs, login and signup endpoints, expensive operations like search or exports, and multi-tenant systems where one customer must not starve the others.",
+    pitfalls: "Fixed windows allow a double burst at the boundary between two windows. Counting in each server's memory with many servers multiplies the real limit; share the counter atomically. Decide up front whether to let traffic through (fail open) or block it (fail closed) when the rate limiter itself is down. Not returning a Retry-After header leaves clients guessing and retrying too soon."
   },
 
   "backoff": {
     name: "Retries with exponential backoff + jitter",
     icon: "⏳",
     cat: "Reliability",
-    one: "Wait longer after each failure, with randomness, so retries don't stampede.",
-    analogy: "If a crowded door is stuck, everyone pushing again at the same second keeps it stuck. Staggered pushes get through.",
-    body: "Delay = base × 2^attempt, randomized (\"full jitter\": random between 0 and that). Without jitter, thousands of clients retry in synchronized waves and re-crash the recovering service.",
-    used: ["stripe","whatsapp"]
+    one: "When a request fails, wait before trying again, double the wait each time, and add some randomness so thousands of clients don't all retry at the same moment.",
+    analogy: "When a crowded door jams, everyone shoving again on the count of three keeps it jammed. If people step back and try at random moments, the door clears and they get through.",
+    body: "A database hiccups for two seconds. 50,000 app clients see errors and do the natural thing: retry immediately. Then again, and again. The database, trying to recover, now faces several times its normal traffic, all of it retries, and it falls over properly. A brief blip has turned into an outage. This is called a <b>retry storm</b>, or the thundering herd problem.<br><br>Two fixes work together. <b>Exponential backoff</b> means waiting longer after each failure. With a base of 100 ms, wait 100 ms after the 1st failure, 200 after the 2nd, 400 after the 3rd, then 800, 1,600 and so on, usually up to a cap such as 30 seconds and a maximum number of attempts. A struggling service gets breathing room instead of a beating.<br><br>Backoff alone isn't enough. If 50,000 clients all failed at the same instant, they'll all wait exactly 100 ms and retry together, then 200 ms and retry together, in synchronised waves. <b>Jitter</b> adds randomness to break this up. With “full jitter”, popularised by an AWS architecture blog post, each client waits a random time between 0 and the backoff value. Instead of 50,000 retries at the same millisecond, they're spread across the whole window.<br><br>Only retry things that might succeed next time: timeouts, 503 “service unavailable”, 429 “too many requests”. A 400 “bad request” will fail forever. And if the request changes something, pair retries with an idempotency key. AWS SDKs, Google's client libraries and Stripe's libraries all build in backoff with jitter.",
+    used: ["stripe","whatsapp"],
+    when: "Any client calling a network service that can fail temporarily: API calls, database connections, queue consumers, mobile apps reconnecting.",
+    pitfalls: "Retrying with no jitter creates synchronised waves that keep the service down. Retrying errors that can never succeed, like validation failures. Retries at every layer (app, library, load balancer) multiply: 3 retries at each of 3 layers is up to 64 attempts per user action. Retrying non-idempotent operations without an idempotency key can double-charge or double-send."
   },
 
   "health-checks": {
@@ -111,11 +121,11 @@ Object.assign(BP.CONCEPTS, {
     icon: "💓",
     cat: "Reliability",
     fig: "lb",
-    one: "Continuously verify servers are alive so traffic only goes to healthy ones.",
-    analogy: "A lifeguard counting swimmers every 30 seconds and blowing the whistle when one stops waving.",
-    body: "<b>Health check</b>: the LB pings each host (port, path, protocol) every interval; after N consecutive failures (unhealthy threshold) it stops routing there, and after M successes it adds the host back. <b>Heartbeat</b>: the server pushes \"I'm alive\" instead. The notes' example (30 s interval, 5 s timeout, thresholds of 2) means up to ~65 s of traffic can reach a dead host.",
-    when: "Behind every load balancer, in orchestrators, ZooKeeper sessions, HDFS DataNodes.",
-    pitfalls: "Checking only \"/\" can report healthy while the database is down; checks that are too aggressive cause flapping."
+    one: "Regularly checking that each server is alive and working, so traffic only goes to healthy ones and dead ones are noticed quickly.",
+    analogy: "A lifeguard scanning the pool every 30 seconds, counting heads. Anyone who stops waving gets attention before it's too late.",
+    body: "You have 10 servers behind a load balancer (a component that spreads requests across servers). One runs out of memory and freezes. If the load balancer keeps sending it a tenth of all traffic, a tenth of your users see errors until someone notices. Health checks let the system notice by itself, in seconds.<br><br>A <b>health check</b> is the load balancer asking each server “are you OK?” on a schedule. It might open a connection to a port or, better, request a path like <code>/health</code> and expect a 200 response within a timeout. One failure could be a blip, so there are thresholds: after, say, 2 failures in a row the server is marked unhealthy and taken out of rotation; after 2 successes it's put back.<br><br>Those settings have real costs. Take a 30-second interval, a 5-second timeout and an unhealthy threshold of 2. In the worst case a server dies right after passing a check, the next check comes 30 seconds later and times out after 5, and the second failure comes 30 seconds after that. That's around 65 seconds of traffic going to a dead host. Shorter intervals detect faster but add load and can flag a server that's merely busy.<br><br>A <b>heartbeat</b> flips the direction: each server sends “I'm alive” every few seconds to a coordinator, which declares it dead after a few missed beats. HDFS DataNodes heartbeat the NameNode, ZooKeeper clients keep sessions alive this way, and Kubernetes probes containers for liveness and readiness.",
+    when: "Behind every load balancer, in container orchestrators, and anywhere a coordinator needs to know which members of a cluster are alive.",
+    pitfalls: "A check that only returns “OK” from the web server reports healthy while the database behind it is down; a deeper check that tests every dependency can take the whole fleet out when one shared dependency blips, so choose deliberately. Thresholds that are too aggressive make servers flap in and out of rotation. Forgetting that slow detection means many seconds of failed requests."
   },
 
   "orchestrator": {
@@ -123,10 +133,11 @@ Object.assign(BP.CONCEPTS, {
     name: "Orchestrator (cluster manager)",
     icon: "🎛️",
     cat: "Reliability",
-    one: "The control-plane brain that adds shards, replaces dead machines and keeps the replication level.",
-    analogy: "A football manager substituting injured players and bringing new signings into the squad.",
-    body: "It watches heartbeats, keeps X standby machines for instant replacement, uses spares as extra replicas, and creates new shards in two phases (staging copy, then go-live and catch-up) so downtime shrinks from minutes to seconds. Examples: the HDFS NameNode, the HBase HMaster, the Kubernetes control plane.",
-    pitfalls: "Never add capacity reactively at peak; the migration itself adds load."
+    one: "The “brain” of a cluster that watches all the machines, replaces dead ones, adds capacity and keeps enough copies of everything running.",
+    analogy: "A football manager on the touchline. They watch every player, bring on a substitute when someone's injured, and decide when to add new signings to the squad. The players just play.",
+    body: "Imagine running 500 database machines by hand. At this scale, a few machines fail every week. Someone has to notice, pick a replacement, copy the right data onto it, point traffic at it and make sure there are still three copies of every shard. Doing that at 3 a.m. by pager isn't sustainable. An <b>orchestrator</b> automates it.<br><br>Think of the system in two layers. The <b>data plane</b> is the machines doing the real work, serving requests and storing data. The <b>control plane</b> is the orchestrator: it doesn't handle user traffic, it manages the machines that do. It watches heartbeats to know who's alive and holds a map of which machine owns which data.<br><br>When a machine dies, the orchestrator notices the missing heartbeats, picks a spare, tells it to copy the lost data from surviving replicas and, once it's caught up, routes traffic to it. Keeping a few <b>standby</b> machines warm makes this nearly instant, and they can serve as extra read replicas while they wait. Adding a new shard happens in two phases: first build a staging copy in the background while the old shard keeps serving, then switch over and replay the few writes that arrived during the copy. Downtime shrinks from minutes to seconds.<br><br>You've met orchestrators already: the HDFS NameNode tracks file blocks, the HBase HMaster assigns regions to servers, and the Kubernetes control plane keeps the number of running containers equal to what you asked for, restarting any that die.",
+    when: "Any cluster large enough that machine failures and capacity changes are routine events, not rare emergencies.",
+    pitfalls: "Adding capacity reactively at peak traffic: copying data to new machines adds load exactly when you can least afford it, so scale before the rush. Making the orchestrator itself a single point of failure; it needs its own replicas and leader election. Automatic replacement that reacts to a network blip can trigger a storm of unnecessary data copies, so wait a sensible time before declaring a machine dead."
   },
 
   "wal": {
@@ -135,9 +146,11 @@ Object.assign(BP.CONCEPTS, {
     icon: "📜",
     cat: "Reliability",
     fig: "lsm",
-    one: "Append every change to a durable log before applying it, so a crash can be replayed.",
-    analogy: "A ship's logbook: if the captain forgets, the log tells you exactly what happened.",
-    body: "Appends are sequential and fast. After a crash, replay the log from the last checkpoint to rebuild in-memory state (an LSM memtable, DB pages). MySQL's binlog and Kafka's partitions are the same idea used for replication and streaming."
+    one: "Before changing any data, the database first writes a note describing the change to an append-only file on disk, so after a crash it can replay those notes and lose nothing.",
+    analogy: "A ship's logbook. Every course change is written down before it's made. If the captain gets confused or the bridge loses power, the log tells you exactly what happened, in order.",
+    body: "Databases keep a lot of their working data in memory because memory is fast. But memory is wiped when the power goes out. If the database has confirmed “your payment is saved” and then crashes before writing it to its real data files, that payment is gone. That's unacceptable, yet writing every change straight into the data files would be slow, because the changes land in scattered places on disk.<br><br>The write-ahead log solves this. For every change, the database first appends a short record, such as “transaction 812: set balance of account 7 to ₹4,500”, to the end of a log file and forces it to disk. Only then does it say “committed”. The actual data files are updated later, in the background, in efficient batches.<br><br>Why is this fast? Appending to the end of one file is <b>sequential</b> writing, which disks and SSDs handle far faster than jumping around to update many different spots. After a crash, the database starts from its last <b>checkpoint</b> (a moment when the data files were known to be up to date) and replays every log record after it. In a few seconds, memory is rebuilt exactly as it was. Old log segments are deleted once a checkpoint covers them.<br><br>The idea is everywhere. PostgreSQL literally calls it the WAL. LSM-tree stores like Cassandra and RocksDB use a commit log to protect their in-memory table. And the log doubles as a replication feed: PostgreSQL ships WAL records to replicas, MySQL replicas read the binlog, and Kafka is essentially a giant, shared write-ahead log.",
+    when: "Any store that must not lose confirmed writes after a crash: databases, message brokers, and editors that need to recover in-progress changes.",
+    pitfalls: "Saying “committed” before the log record is actually flushed to disk (an fsync) gives speed but loses writes on power failure. Letting the log grow without checkpoints makes crash recovery take ages. Putting the log on the same overloaded disk as everything else makes every commit slow."
   },
 
   "zookeeper": {
@@ -146,10 +159,11 @@ Object.assign(BP.CONCEPTS, {
     icon: "🐒",
     cat: "Reliability",
     fig: "zookeeper",
-    one: "A small, strongly consistent coordination store: who's the master, config, locks, membership.",
-    analogy: "A town hall notice board that only one candidate can pin the \"mayor\" notice on, and that removes it if the mayor stops showing up.",
-    body: "Data lives in znodes. <b>Ephemeral</b> znodes vanish when their creator's session stops heartbeating, which makes election easy: everyone races to create <code>/cluster/master</code> and one wins. <b>Watches</b> notify clients of changes, so they cache instead of polling. Writes go through a leader and need a majority of the ensemble, which prevents split brain.",
-    when: "Leader election, service discovery, distributed locks, configuration (Kafka, HBase, HDFS HA)."
+    one: "A small, very reliable shared notebook that a cluster uses to agree on things like who the leader is, current settings and who holds a lock.",
+    analogy: "A town-hall notice board where only one person can pin the “Mayor” notice at a time. If the mayor stops turning up, the board removes their notice automatically and the candidates race to pin theirs.",
+    body: "Many systems need one machine to be in charge: one primary database, one Kafka controller, one job scheduler. Picking it sounds easy until the network splits. If two machines each think they're the leader, both accept writes and the data forks. That's called <b>split brain</b>, and it's one of the nastiest bugs in distributed systems. ZooKeeper, created at Yahoo and now an Apache project, exists to make these decisions safely.<br><br>ZooKeeper runs as a small group of servers, an <b>ensemble</b>, typically 3 or 5. Every write goes through the ensemble's own leader and needs a majority to agree. With 5 servers, it keeps working with 2 down, and two separate halves can never both have a majority, so it can't contradict itself.<br><br>Data is stored in a tree of small nodes called <b>znodes</b>, a bit like folders and files. Two features make coordination easy. <b>Ephemeral znodes</b> exist only while the client that created them keeps its session alive with heartbeats; if the client crashes, the znode disappears. <b>Watches</b> let a client ask “tell me when this changes”, so it can cache values instead of constantly polling.<br><br>Leader election then takes a few lines. Every candidate tries to create the ephemeral znode <code>/cluster/master</code>. ZooKeeper lets exactly one succeed: that's the leader. The rest set a watch on it. If the leader dies, its session expires, the znode vanishes, the watchers are notified and they race again. HBase, Hadoop HDFS high availability and older versions of Kafka rely on ZooKeeper; etcd plays the same role for Kubernetes.",
+    when: "Leader election, service discovery, distributed locks and shared configuration, when a cluster must agree on a small amount of critical information.",
+    pitfalls: "Using it as a general database; it's built for small, rarely changing coordination data, not heavy traffic. Running an even number of servers (4 tolerates no more failures than 3). A paused old leader that wakes up after its session expired may still think it's in charge, so protect writes with a fencing token (an increasing number the storage checks). Session timeouts that are too short cause needless leader changes."
   },
 
   "kafka": {
@@ -158,11 +172,11 @@ Object.assign(BP.CONCEPTS, {
     icon: "🪵",
     cat: "Reliability",
     fig: "kafka",
-    one: "A distributed, replicated commit log for high-throughput event streams.",
-    analogy: "A conveyor belt split into lanes: same-key items always ride the same lane in order, and each team of workers splits the lanes between them.",
-    body: "Topics are split into <b>partitions</b> spread across brokers; <code>hash(key) % partitions</code> preserves per-key order. A <b>consumer group</b> assigns each partition to one member (more members than partitions means idle ones). Consumers track <b>offsets</b> and commit after processing. Data is kept for a retention period (or compacted per key), so many groups can read and even replay it.",
-    when: "Event-driven architectures, analytics pipelines, choreography sagas, CQRS relays.",
-    pitfalls: "Changing the partition count reshuffles keys; hot keys overload one partition."
+    one: "A distributed, durable, append-only log that many services can write events into and read from, at very high volume, in order.",
+    analogy: "A conveyor belt split into lanes. Items with the same label always ride in the same lane, so they stay in order. Each team of workers divides the lanes among themselves, and the belt keeps a recording so a new team can watch from the beginning.",
+    body: "An online shop emits an event for every click, cart update, order and payment, say 500,000 events a second. Analytics wants them, the recommendation system wants them, fraud detection wants them, and the warehouse wants just the orders. You don't want every producer calling every consumer. Kafka, created at LinkedIn and open-sourced in 2011, sits in the middle as a shared, permanent stream.<br><br>Events go into <b>topics</b>, like “orders” or “clicks”. Each topic is split into <b>partitions</b>, which are separate append-only logs spread across servers called <b>brokers</b>. This is how Kafka scales: 30 partitions over 10 brokers means 10 machines share the load. Each event has a key, and <code>hash(key) % partitions</code> picks its partition, so all events for customer 42 land in the same partition, in order.<br><br>Reading is done by <b>consumer groups</b>. Within a group, each partition is assigned to exactly one consumer, so the group splits the work. With 30 partitions and 10 consumers, each reads 3; with 40 consumers, 10 sit idle. Each consumer remembers its <b>offset</b>, its position in the partition, and commits it after processing. If it crashes, a replacement continues from the last committed offset.<br><br>Unlike a classic queue, reading doesn't delete anything. Events are kept for a retention period, like 7 days, or compacted to the latest value per key. So the analytics group and the fraud group read the same events independently, and a new service can replay history from the start. Each partition is also replicated across brokers so a dead broker loses nothing.",
+    when: "Event-driven architectures, analytics and data pipelines, activity streams, change-data-capture feeds, and sagas where several services react to the same events.",
+    pitfalls: "Changing the number of partitions later remaps keys, breaking per-key ordering for a while. A single very hot key (one huge customer) overloads its one partition no matter how many you add. Committing the offset before processing loses events on a crash; committing after means occasional duplicates, so consumers should be idempotent. Ordering is only guaranteed within a partition, not across a whole topic."
   },
 
   "observability": {
@@ -170,9 +184,11 @@ Object.assign(BP.CONCEPTS, {
     name: "Observability: logs, metrics, traces",
     icon: "🔭",
     cat: "Reliability",
-    one: "Detect problems fast, find where they happened, and confirm the fix.",
-    analogy: "A smoke alarm (metrics), CCTV footage (logs) and a delivery-tracking timeline (traces).",
-    body: "<b>Metrics</b> (time-series: rate, errors, p95 latency) drive alerts. <b>Logs</b>, centralised and tagged with a trace id, explain what happened. <b>Traces</b> (spans per hop) show where time went. Propagate one trace id through every service and queue: the hop where the logs stop is the culprit."
+    one: "Collecting numbers, records and request timelines from your system so you can spot problems fast, find exactly where they are and confirm the fix worked.",
+    analogy: "A building with smoke alarms (metrics) that tell you something's wrong, CCTV footage (logs) that shows what happened, and a parcel-tracking timeline (traces) that shows where a delivery got stuck.",
+    body: "It's Friday evening and the checkout page has gone slow. Customers are complaining. A single click passes through a web server, an auth service, a cart service, a pricing service, a payment provider and two databases. Which one is the problem? Without observability, you're guessing and restarting things. With it, you can usually answer in minutes. It rests on three kinds of data.<br><br><b>Metrics</b> are numbers measured over time: requests per second, error rate, and latency percentiles. A percentile like <b>p95</b> means 95% of requests were faster than this value, which reveals the slow tail that an average hides. Metrics are cheap to store and power dashboards and alerts: “page someone if checkout errors exceed 1% for 5 minutes”. They tell you <i>that</i> something's wrong.<br><br><b>Logs</b> are timestamped records of individual events, like “payment declined, order 991, code 51”. Collected centrally and searchable, they explain <i>what</i> happened. <b>Traces</b> follow one request across every service. Each step records a <b>span</b>, with a start time and duration, and all spans share a single <b>trace ID</b>. A trace for a slow checkout might show 40 ms in auth, 60 ms in cart, and 2.8 seconds waiting on pricing. Now you know <i>where</i>.<br><br>The glue is passing that trace ID along with every call and every queue message, and writing it into every log line. Then you can jump from a red graph to an example slow trace to the exact logs from the guilty service. OpenTelemetry is the common open standard; Prometheus, Grafana, Jaeger, Datadog and the ELK stack are popular tools.",
+    when: "From the first day a system runs in production, and especially once a single user request crosses more than one service or queue.",
+    pitfalls: "Alerting on causes (high CPU) rather than user pain (errors, slow pages) leads to noisy pages nobody trusts. Watching averages hides the slow tail; track p95 and p99. Not passing the trace ID through queues and async jobs breaks the trail exactly where bugs hide. Logging everything at full detail gets expensive fast and can leak personal data."
   },
 
   "circuit-breaker": {
@@ -181,9 +197,10 @@ Object.assign(BP.CONCEPTS, {
     icon: "🔌",
     cat: "Reliability",
     fig: "breaker",
-    one: "Stop calling a failing dependency for a while, fail fast with a fallback, then probe for recovery.",
-    analogy: "The fuse box in your house: it trips to protect everything else, and you test it before switching back on.",
-    body: "<b>Closed</b>: calls flow while failures (timeouts, 5xx, but not \"user not found\") are counted. Above a threshold → <b>Open</b>: short-circuit to a fallback so threads stay free. After T seconds → <b>Half-open</b>: a few trial calls decide between Closed and Open. It prevents cascading failures and gives the sick service room to recover.",
-    when: "Every synchronous call to another service or third party."
+    one: "A safety switch around calls to another service: if that service keeps failing, stop calling it for a while, answer with a fallback instead, then carefully test whether it has recovered.",
+    analogy: "The fuse box in your house. When one circuit has a fault, the fuse trips so the rest of the house stays safe, and you flick it back on carefully once the fault is fixed.",
+    body: "Your product page calls a reviews service. One day the reviews service gets slow: every call hangs for 10 seconds before timing out. Your product pages wait too. Each waiting request holds a thread and a connection, and within a minute your web servers run out of both. Now the whole site is down, because of reviews. One sick service has taken everything down with it, a <b>cascading failure</b>.<br><br>A circuit breaker wraps the calls and has three states. <b>Closed</b> is normal: calls flow through while the breaker counts failures, meaning timeouts and server errors. Ordinary answers like “product not found” don't count, since the service is working fine when it says that. If failures cross a threshold, say 50% of the last 20 calls, the breaker trips to <b>Open</b>.<br><br>While Open, the breaker doesn't call the service at all. It fails instantly and returns a <b>fallback</b>: hide the reviews section, or show cached reviews. Product pages load in 200 ms again, minus reviews, and the struggling service gets a break from traffic. After a cool-down, say 30 seconds, the breaker moves to <b>Half-open</b> and lets a few trial requests through. If they succeed, it closes again. If they fail, it goes back to Open for another cool-down.<br><br>Netflix's Hystrix library made the pattern popular; today Resilience4j, Polly for .NET, and service meshes like Istio and Envoy provide it. Breakers work best alongside sensible timeouts, which detect slowness, and retries with backoff, which handle brief blips.",
+    when: "Around every synchronous call to another service or a third-party API, especially when your page or request can still be useful without that dependency.",
+    pitfalls: "Counting client errors such as “not found” or “invalid input” as failures trips the breaker on a healthy service. Breakers with no real fallback just turn slow errors into fast errors. One breaker shared across all endpoints of a service means one broken endpoint blocks the healthy ones. Missing or very long timeouts mean the breaker learns about failures far too late."
   }
 });
