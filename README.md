@@ -49,11 +49,11 @@ Also included: a concept library (searchable, with a slide-out drawer for each c
 
 ## Files
 
-- `js/lessons-1.js`, `js/lessons-2.js`: the HLD course (block-based lesson format, documented at the top of lessons-1.js).
+- `js/course/`: the HLD course, one file per lesson (`00-modules.js` holds the modules and documents the block format). Each lesson file owns all of its text, figures and charts.
 - `js/concepts-2.js`: the expanded building-block library (65 concepts, each linked to an interactive figure and its lessons).
 - `js/figs-core.js`, `js/figs-data.js`, `js/figs-arch.js`: interactive figures; each is `BP.FIGS[name](el) → destroy`.
-- `js/lessons-deep.js`: deeper content matched against the notes (the caching lesson rebuilt section by section, plus worked examples, commands and the notes' own questions across the other lessons). `js/images.js`: free-licensed photos from Wikimedia Commons, credited under each image.
-- `js/charts.js`: dependency-free animated SVG charts (bar, line, donut). `js/scenes.js`: animated hero illustrations built from a small parts kit (servers, databases, caches, phones, queues…); case-study scenes are generated from each architecture diagram. `js/enrich.js`: each lesson's illustration and its 26 charts.
+- `js/images.js`: free-licensed photos from Wikimedia Commons, credited under each image.
+- `js/charts.js`: dependency-free animated SVG charts (bar, line, donut). `js/scenes.js`: animated hero illustrations built from a small parts kit (servers, databases, caches, phones, queues…); case-study scenes are generated from each architecture diagram. `js/enrich.js`: each lesson's hero illustration.
 - `css/figs.css`: styles for the figures and course pages.
 - `js/cases-new.js` + `js/sims2.js`: the YouTube, Twitter and Google Docs case studies and their labs (the Docs lab's transform is fuzz-tested for convergence).
 - `js/content.js`: case-study content (case studies, concepts, toolkit data). Add a case study by appending to `BP.CASES`.
