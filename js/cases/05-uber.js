@@ -9,7 +9,7 @@ BP.CASES.push({
   tagline: "A million moving dots that change every few seconds, and you need the right one near you in milliseconds.",
   level: "Advanced",
   minutes: 31,
-  concepts: ["geo-index","sharding","ttl-lock","geo-sharding","caching"],
+  concepts: ["geo-index","sharding","ttl-lock","dispatch-state-machine","caching"],
   stats: [
     {v: 30,suf: "M+",label: "trips per day (2024 annual report ÷ 365)",kind: "Reported"},
     {v: 4,pre: "~",suf: " s",label: "between a driver's location updates",kind: "Typical"},

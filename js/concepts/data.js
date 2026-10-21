@@ -94,7 +94,7 @@ Object.assign(BP.CONCEPTS, {
     sim: "onsale"
   },
 
-  "geo-sharding": {
+  "dispatch-state-machine": {
     name: "Dispatch & state machines",
     icon: "🔄",
     cat: "Data",
