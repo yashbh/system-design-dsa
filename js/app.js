@@ -208,6 +208,13 @@
   BP.renderDiagram = renderDiagram;
 
   /* ── Lazy figure mounting (figures & sims start when scrolled near) ── */
+  // Wide landscape drawings stay legible on phones: their stage scrolls sideways instead of shrinking the text.
+  function markWide(el) {
+    $$(".fig-stage, .sim-stage, .lab-stage", el).forEach((st) => {
+      const svg = st.querySelector(":scope > svg"); if (!svg || !svg.viewBox || !svg.viewBox.baseVal) return;
+      const vb = svg.viewBox.baseVal; if (vb.width >= 560 && vb.width / vb.height > 1.5) st.classList.add("wide");
+    });
+  }
   function mountFigures(root) {
     const io = new IntersectionObserver((es) => es.forEach((e) => {
       if (!e.isIntersecting) return;
@@ -217,7 +224,7 @@
       const name = el.dataset.fig || el.dataset.sim;
       const fn = el.dataset.fig ? BP.FIGS[name] : BP.SIMS[name];
       if (!fn) { el.innerHTML = `<p class="muted">Missing figure: ${name}</p>`; return; }
-      try { const d = fn(el, {}); if (typeof d === "function") onCleanup(d); } catch (err) { console.error(err); el.innerHTML = `<p class="muted">Figure failed to load.</p>`; }
+      try { const d = fn(el, {}); if (typeof d === "function") onCleanup(d); markWide(el); } catch (err) { console.error(err); el.innerHTML = `<p class="muted">Figure failed to load.</p>`; }
     }), { rootMargin: "300px" });
     $$("[data-fig],[data-sim],[data-viz]", root).forEach((x) => io.observe(x));
     // Charts animate when they are actually on screen.
@@ -250,7 +257,7 @@
 
       <section class="section reveal">
         <div class="section-head"><div class="eyebrow">The course</div><h2>Learn the fundamentals, one interactive lesson at a time</h2><p>${LESSONS().length} lessons following the Scaler HLD curriculum: DNS to Kafka to sagas, with ${LESSONS().reduce((a, l) => a + l.sections.reduce((b, s) => b + s.blocks.filter((x) => ["fig", "sim", "flow", "chart"].includes(x[0])).length, 0), 0)} animated diagrams and charts.</p></div>
-        <div class="mod-grid stagger">${BP.MODULES.map((m, i) => { const ls = LESSONS().filter((l) => l.mod === m.id), dn = ls.filter((l) => p.done[lessonKey(l.id)]).length; return `<a class="card mod-card mod-${m.id}" href="#/lesson/${ls[0].id}"><div class="mod-thumb">${BP.LESSON_SCENES[ls[0].id] ? BP.scene(BP.LESSON_SCENES[ls[0].id]) : ""}</div><div class="row" style="justify-content:space-between"><span class="mod-dot"></span><span class="tag">Module ${i + 1}</span></div><h4>${m.name}</h4><p>${m.desc}</p><div class="small muted">${ls.length} lessons · ${dn} done</div><div class="xp-bar" style="width:100%;margin-top:8px"><i style="width:${(dn / ls.length) * 100}%"></i></div></a>`; }).join("")}</div>
+        <div class="mod-grid stagger">${BP.MODULES.map((m, i) => { const ls = LESSONS().filter((l) => l.mod === m.id), dn = ls.filter((l) => p.done[lessonKey(l.id)]).length; return `<a class="card mod-card mod-${m.id}" href="#/lesson/${ls[0].id}"><div class="mod-thumb">${BP.LESSON_SCENES[ls[0].id] ? BP.scene(BP.LESSON_SCENES[ls[0].id]) : ""}</div><div class="row" style="justify-content:space-between"><span class="mod-dot"></span><span class="tag">Module ${i + 1}</span></div><h4>${m.name}</h4><p>${m.desc}</p><div class="small muted">${ls.length} lessons · ${dn} done</div><div class="xp-bar" style="margin-top:8px"><i style="width:${(dn / ls.length) * 100}%"></i></div></a>`; }).join("")}</div>
         <div style="margin-top:18px"><a class="btn primary" href="#/course">Open the full course →</a></div>
       </section>
 

@@ -24,7 +24,8 @@ window.BP = window.BP || {};
     if (f) return KW.has(f) ? `<i class="tk-k">${f}</i>` : `<i class="tk-f">${f}</i>`; if (w) return KW.has(w) ? `<i class="tk-k">${w}</i>` : w; return esc(o);
   });
   BP.codeBlock = (code, lang) => `<pre class="pcode">${String(code).replace(/\s+$/, "").split("\n").map((l) => `<span>${BP.hlCode(l) || " "}</span>`).join("")}<button class="copy-btn" type="button">Copy</button></pre>`;
-  const SLOT = 46;
+  // Cell pitch: 42px cells + 4px gap, or 33 + 3 on small phones (matches css/mobile.css).
+  const small = () => window.matchMedia && matchMedia("(max-width: 480px)").matches;
   const PCOL = ["#2456d6", "#c03a62", "#1f7a4f", "#b45309", "#6a46c9", "#0f7c86"];
   const PFIX = { l: 0, lo: 0, i: 0, slow: 0, curr: 0, left: 0, start: 0, r: 1, hi: 1, j: 1, fast: 1, right: 1, end: 1, prev: 3, mid: 4, top: 4, k: 2, nxt: 2, next: 2, head: 2, meet: 1, tail: 5 };
   const pc = (n) => { if (PFIX[n] != null) return PCOL[PFIX[n]]; let h = 0; for (const ch of String(n)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return PCOL[h % PCOL.length]; };
@@ -45,14 +46,14 @@ window.BP = window.BP || {};
   /* ── Panel renderers: (panel, hint) → html ── */
   const R = {};
   R.array = (p, h) => {
-    const n = p.vals.length, ks = h.perm ? occKeys(p.vals) : null;
+    const n = p.vals.length, ks = h.perm ? occKeys(p.vals) : null, SLOT = small() ? 36 : 46, half = small() ? 16.5 : 21;
     const win = p.win && p.win[1] >= p.win[0] ? `<div class="av-win" data-k="win" style="left:${p.win[0] * SLOT - 3}px;width:${(p.win[1] - p.win[0] + 1) * SLOT + 2}px"></div>` : "";
     const cells = p.vals.map((v, i) => `<div class="av-cell ${(p.hl && p.hl[i]) || ""} ${sz(v)}"${ks ? ` data-k="${esc(ks[i])}" data-g="a${h.slot}:${esc(ks[i])}"` : ""}><b data-flash>${show(v)}</b></div>`).join("");
     const idx = p.idx === false ? "" : `<div class="av-idx">${p.vals.map((_, i) => `<small>${i}</small>`).join("")}</div>`;
-    return `<div class="av-arr">${p.label ? `<span class="av-lab">${esc(p.label)}</span>` : ""}<div class="av-arr-main" style="width:${Math.max(1, n) * SLOT + 30}px"><div class="av-cells">${win}${cells}</div>${idx}${ptrLane(p.ptr, n, (i) => i * SLOT + 21 + "px")}</div></div>`;
+    return `<div class="av-arr">${p.label ? `<span class="av-lab">${esc(p.label)}</span>` : ""}<div class="av-arr-main" style="width:${Math.max(1, n) * SLOT + 30}px"><div class="av-cells">${win}${cells}</div>${idx}${ptrLane(p.ptr, n, (i) => i * SLOT + half + "px")}</div></div>`;
   };
   R.bars = (p, h) => {
-    const n = Math.max(1, p.vals.length), water = p.water || [], ks = h.perm ? occKeys(p.vals) : null;
+    const n = Math.max(1, p.vals.length), SLOT = 46, water = p.water || [], ks = h.perm ? occKeys(p.vals) : null;
     const mx = Math.max(1, ...p.vals.map((v, i) => (Math.abs(+v) || 0) + (+water[i] || 0)), p.rect ? +p.rect.h || 0 : 0);
     const rect = p.rect && p.rect.r >= p.rect.l ? `<div class="av-brect ${p.rect.cls || ""}" data-k="rect" style="left:${(p.rect.l / n) * 100}%;width:${((p.rect.r - p.rect.l + 1) / n) * 100}%;height:${(p.rect.h / mx) * 100}%"></div>` : "";
     const bars = p.vals.map((v, i) => `<div class="av-bar ${(p.hl && p.hl[i]) || ""}"${ks ? ` data-k="${esc(ks[i])}" data-g="b${h.slot}:${esc(ks[i])}"` : ""}><i class="w" style="height:${((+water[i] || 0) / mx) * 100}%"></i><i class="h" style="height:${((Math.abs(+v) || 0) / mx) * 100}%"></i><b data-flash>${show(v)}</b></div>`).join("");

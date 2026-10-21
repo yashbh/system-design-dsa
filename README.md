@@ -60,6 +60,7 @@ Also included: a concept library (searchable, with a slide-out drawer for each c
 - `js/sims.js`: the eight simulations. Each one renders into a container and returns a cleanup function.
 - `js/algoviz.js`: the DSA animation engine and player (frame/panel format documented at the top). `js/algos.js`: the core algorithm library. `js/dsa-core.js`: DSA topic order and pattern table; `js/dsa-*.js`: topic content (and extra animations) per group. `css/dsa.css`: the player and DSA page styles.
 - `js/app.js`: hash router, views, the diagram/trace engine, quizzes and progress.
+- `css/mobile.css` (loaded last): phone and tablet layout. On phones it adds a bottom tab bar, collapses grids to one column, gives wide diagrams a sideways scroll at a readable size, makes the animation controls stick to the bottom of the screen, and uses smaller array cells.
 - `css/styles.css`: base layout and components. `css/theme.css` (loaded last) is the visual theme: the "Stone and blueprint" palette and Hanken Grotesk from the taste-skill library, with gradients, glows, tracked micro-labels and hover lifts removed. Hanken Grotesk loads from Google Fonts and falls back to the system sans offline.
 
 ## Colour

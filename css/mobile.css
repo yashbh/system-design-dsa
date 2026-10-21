@@ -1,0 +1,154 @@
+/* Blueprint — phone and small-tablet layout. Loaded last so it wins over theme.css. */
+html { -webkit-text-size-adjust: 100%; }
+/* clip (not hidden) so body never becomes a scroll container: position: sticky keeps working */
+body { overflow-x: clip; }
+.drawer { visibility: hidden; transition: transform .4s cubic-bezier(.2,.8,.2,1), visibility 0s linear .4s; }
+.drawer.on { visibility: visible; transition: transform .4s cubic-bezier(.2,.8,.2,1), visibility 0s; }
+.nav-ic, .nav .ns { display: none; }
+img, svg, video { max-width: 100%; }
+
+/* ── Tablets ── */
+@media (max-width: 1000px) {
+  .hero, .dsa-hero, .hero-split { grid-template-columns: 1fr; gap: 28px; }
+  .hero { padding-top: 44px; }
+  .case-layout { grid-template-columns: 1fr; gap: 0; margin-top: 20px; }
+  .toc { display: none; }
+  .topbar { gap: 14px; }
+  .nav { margin-left: 4px; }
+  .nav a { white-space: nowrap; padding: 7px 10px; font-size: .88rem; }
+  .xp { display: none; }
+}
+
+/* ── Phones ── */
+@media (max-width: 760px) {
+  body { font-size: 16px; }
+  main { padding: 0 16px calc(96px + env(safe-area-inset-bottom)); }
+
+  /* top bar: logo + theme toggle; navigation moves to a bottom tab bar */
+  .topbar { padding: 10px 16px; gap: 10px; padding-top: calc(10px + env(safe-area-inset-top)); }
+  .xp { display: none; }
+  .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; margin: 0; gap: 0; display: grid; grid-template-columns: repeat(5, 1fr);
+    background: color-mix(in srgb, var(--bg) 94%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    box-shadow: 0 -1px 0 var(--border); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
+  .nav a { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; border-radius: 10px; font-size: .68rem; font-weight: 600; line-height: 1.1; text-align: center; background: none !important; }
+  .nav a .nl { display: none; } .nav a .ns { display: block; }
+  .nav-ic { display: block; width: 22px; height: 22px; }
+  .nav a.active { color: var(--c, var(--accent)); }
+  .nav a.active .nav-ic { stroke-width: 2.2; }
+
+  /* type scale */
+  h1 { font-size: clamp(1.9rem, 8.4vw, 2.5rem) !important; line-height: 1.08 !important; }
+  h2 { font-size: clamp(1.35rem, 5.6vw, 1.7rem); }
+  .hero p.lead, .lead { font-size: 1.04rem !important; max-width: none !important; }
+  .tagline { font-size: 1.02rem; }
+  .section { margin-top: 44px; }
+  .section-head p { font-size: .95rem; }
+
+  /* common grids collapse */
+  .stats, .grid2, .grid3, .req-grid, .naive, .opts, .how, .framework, .trade, .calc, .appr, .refs, .used, .takeaways, .metrics { grid-template-columns: 1fr !important; }
+  .cases, .case-grid, .concept-grid, .mod-grid, .dsa-grid { grid-template-columns: 1fr !important; }
+  .row { flex-wrap: wrap; }
+  .ctas .btn { flex: 1 1 auto; justify-content: center; text-align: center; }
+  .pager { grid-template-columns: 1fr !important; }
+  .pager a.next { text-align: left; }
+  .footer { flex-direction: column; gap: 8px; margin-top: 60px; }
+
+  /* wide content scrolls inside its own box instead of the page */
+  .ltable-wrap, .table-wrap, .est, pre, .lcode, .diagram-wrap, .fig-host, .flow-host, .chart-host { max-width: 100%; }
+  .ltable-wrap, .lcode, pre { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ltable { font-size: .84rem; } .ltable th, .ltable td { padding: 8px 10px; }
+  table.est { font-size: .85rem; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .figwrap { margin: 20px 0; }
+  .callout { padding: 12px 14px; }
+
+  /* segmented controls inside figures wrap instead of running off-screen */
+  .seg { display: flex; flex-wrap: wrap; max-width: 100%; }
+  .seg button { flex: 1 1 auto; padding: 7px 10px; font-size: .8rem; }
+
+  /* figures: wide diagrams scroll sideways at a readable size; metric cards sit three across */
+  .fig-stage { padding: 10px; }
+  .fig-stage.wide { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .fig-stage.wide > svg { min-width: 540px; }
+  .fig-stage.wide::after { content: "← swipe the diagram →"; display: block; text-align: center; font-size: .68rem; color: var(--dim); margin-top: 4px; position: sticky; left: 0; width: calc(100vw - 54px); }
+  .fig-ctrl { gap: 10px; }
+  .diagram-bar + .diagram { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .diagram-bar + .diagram > svg { min-width: 680px; }
+  .diagram-bar { padding: 10px 12px; gap: 6px; }
+  .diagram-bar .btn { flex: 1 1 auto; }
+  .fig-foot .grid3, .fig-foot .grid2 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px; }
+  .fig-foot .grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .metric { padding: 9px 10px; }
+  .metric .k { font-size: .6rem; letter-spacing: .02em; }
+  .metric .v { font-size: 1rem; }
+
+  /* lessons, cases */
+  .case-hero { padding-top: 26px; }
+  .app-row { gap: 10px; }
+  .hero-scene { max-height: 220px; }
+  .lesson-row { padding: 12px 14px; }
+  .quiz .opts { grid-template-columns: 1fr; }
+  .drawer { padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); }
+
+  /* DSA overview */
+  .dsa-hero { padding: 26px 0 10px; gap: 22px; }
+  .dsa-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+  .dsa-hero > .fig-host { display: none; }
+  .dsa-stats div b { font-size: 1.5rem; }
+  .play-pick select { width: 100%; }
+  .pat-table td:first-child { white-space: normal; }
+  .lc-list { grid-template-columns: 1fr; }
+
+  /* problem cards */
+  .prob > summary { padding: 12px 14px; gap: 8px; flex-wrap: wrap; }
+  .prob > summary b { flex: 1 1 60%; }
+  .prob .pbody { padding: 0 12px 14px; grid-template-columns: minmax(0, 1fr); }
+  .prob .pex, .ap-idea { overflow-wrap: anywhere; }
+  .ap-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin: 0 -12px; padding: 0 12px 2px; }
+  .ap-tabs::-webkit-scrollbar { display: none; }
+  .ap-tab { flex: none; }
+  .ap-arrow { display: none; }
+  .pcode { font-size: .74rem; }
+  .pcode > span { padding: 0 12px 0 32px; }
+  .pcode > span::before { left: 2px; }
+
+  /* algorithm player */
+  .av { padding: 12px; gap: 10px; border-radius: 10px; grid-template-columns: minmax(0, 1fr); }
+  .av-head > b { width: 100%; margin-right: 0; }
+  .av-in { flex: 1 1 100%; flex-wrap: wrap; }
+  .av-in span { width: 100%; white-space: normal; }
+  .av-in input { min-width: 0; width: 100%; font-size: 16px; } /* 16px stops iOS zooming on focus */
+  .av-head .av-run { flex: 1; }
+  .av-presets { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .av-presets::-webkit-scrollbar { display: none; }
+  .av-pre { flex: none; }
+  .av-note { font-size: .95rem; padding: 10px 12px; gap: 8px; flex-direction: column; }
+  .av-stage { margin: 0 -12px; padding: 6px 12px 4px; }
+  .av-code { font-size: .72rem; max-height: 230px; }
+  .av-code span { padding-left: 28px; } .av-code span::before { left: 2px; }
+  .av-legend { font-size: .7rem; }
+  .av-ctl { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; position: sticky; bottom: calc(66px + env(safe-area-inset-bottom)); z-index: 6;
+    margin: 0 -12px -12px; padding: 8px 12px 10px; background: color-mix(in srgb, var(--bg2) 94%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    box-shadow: 0 -1px 0 var(--border); border-radius: 0 0 10px 10px; }
+  .av-ctl .btn { min-width: 0; padding: 10px 4px; font-size: .78rem; }
+  .av-ctl .av-scrub { grid-column: 1 / 5; min-width: 0; height: 28px; }
+  .av-ctl .av-speed { grid-column: 5; }
+  .av-graph { max-height: 280px; }
+  /* graphs and trees are drawn in a 520-wide canvas; enlarge their text so it stays readable when scaled down */
+  .av-graph .av-node text { font-size: 17px; } .av-graph .av-node .av-tag { font-size: 15px; } .av-graph .av-elab { font-size: 15px; }
+  .av-graph .av-node circle { r: 21px; }
+  .av-tree .av-node text { font-size: 14px; } .av-tree .av-node .av-tag { font-size: 12.5px; }
+}
+@media (hover: none) { .av-hint { display: none; } }
+
+/* ── Small phones: smaller array cells (algoviz.js reads the same breakpoint) ── */
+@media (max-width: 480px) {
+  .av-cells, .av-idx { gap: 3px; }
+  .av-cell, .av-cell b, .av-idx small { width: 33px; }
+  .av-cell b { height: 36px; font-size: .8rem; }
+  .av-cell.sm b { font-size: .66rem; } .av-cell.xs b { font-size: .54rem; }
+  .av-win { height: 44px; }
+  .av-grid td, .av-grid th { min-width: 28px; height: 30px; padding: 0 4px; font-size: .72rem; }
+  .av-brow i { width: 24px; height: 28px; } .av-brow .av-lab { width: 60px; } .av-bpos small { width: 24px; }
+  .av-bars { height: 150px; }
+  .av-sitem, .av-qitem { padding: 6px 9px; font-size: .74rem; }
+}
