@@ -5,7 +5,6 @@ BP.LESSONS.push({
   icon: "🌲",
   minutes: 22,
   title: "NoSQL internals: LSM trees, SSTables & Bloom filters",
-  scaler: "HLD 10 · NoSQL Internals: LSM Tree + Bloom Filter + Sparse Index",
   summary: "Build, one fix at a time, the storage engine behind Cassandra and RocksDB, and see how append-only logs, memtables, sorted files and Bloom filters make writes fly.",
   concepts: ["lsm","bloom-filter","wal"],
   related: ["discord"],
@@ -14,7 +13,7 @@ BP.LESSONS.push({
       ["p","Say you run the backend for a fitness watch. A couple of million watches each send a heart-rate reading every few seconds (illustrative numbers, but real fitness and IoT apps look a lot like this). That's hundreds of thousands of writes a second, all day, and most of the data is read back rarely: a weekly chart here, a doctor's export there."],
       ["p","You try a classic relational database first. It works at small scale. Then the write rate climbs and the disks start to queue up. Every new reading means finding the right spot on disk and updating it in place. Your database spends its life moving a disk head around."],
       ["p","This is the kind of workload that databases like Cassandra, HBase, RocksDB and ScyllaDB were built for. They all use the same idea underneath, called a <b>Log-Structured Merge tree</b>, or LSM tree. The name sounds intimidating. The idea is not."],
-      ["p","We won't start from the answer. We'll start with the dumbest possible storage engine and fix one problem at a time, exactly the way the lecture does it. By the end you'll have reinvented the LSM tree yourself, and you'll know why every piece is there."]
+      ["p","We won't start from the answer. We'll start with the dumbest possible storage engine and fix one problem at a time. By the end you'll have reinvented the LSM tree yourself, and you'll know why every piece is there."]
     ] },
     { h: "Why variable-size data makes updates hard", blocks: [
       ["p","First, what makes NoSQL storage different? In a SQL table, rows usually have a fixed shape. An <code>INT</code> is 4 bytes, a <code>CHAR(20)</code> is 20 bytes. That makes it easy to update a row in place: the new value fits exactly where the old one was."],
@@ -80,13 +79,13 @@ BP.LESSONS.push({
       ["p","Three follow-up questions always come up once the basic design is clear. Each one has a neat answer that falls out of the structure."],
       ["steps",[["What if the machine crashes?","The memtable lives in RAM, so a crash wipes it. But every write was appended to the WAL first. Before the node serves traffic again, it replays the WAL entries written since the last flush to rebuild the memtable. Rebuilding is in-memory work and is quick; reading the WAL from disk is the slow part."],["How do you delete from an immutable file?","You can't edit an SSTable, so a delete writes a new entry: a <b>tombstone</b>, a marker that says “this key is deleted”. A read that finds the tombstone first reports “not found”, even though older SSTables still hold the old value. Compaction drops the old values and, eventually, the tombstone."],["What about wide rows?","In column-family stores, a row keeps collecting columns. Writes append (row key, column family) entries to the memtable. Compaction <b>merges</b> the entries for a row instead of keeping only the latest one. A query like “last N entries for this row” collects from the memtable, then from successive SSTables, until it has N or runs out."]]],
       ["warn","Tombstones aren't free. They take space and reads must step over them until compaction removes them. Discord has written about this: in their Cassandra cluster, reads over channels with lots of deleted messages had to scan past piles of tombstones and slowed down badly."],
-      ["extra","An aside from the notes on why deleting a <i>file</i> is cheaper than writing one: deleting just drops the reference to the data, and the bits stay on disk, which is why deleted files can often be recovered. Writing has to change every bit. Tombstones play on the same idea: mark it gone now, clean up later."]
+      ["extra","An aside on why deleting a <i>file</i> is cheaper than writing one: deleting just drops the reference to the data, and the bits stay on disk, which is why deleted files can often be recovered. Writing has to change every bit. Tombstones play on the same idea: mark it gone now, clean up later."]
     ] },
     { h: "Compaction: the cleaning crew", blocks: [
       ["p","Without compaction, an LSM tree would collect SSTables forever. Reads would check more and more files, and the disk would fill with stale versions and tombstones. Compaction is what keeps the system tidy."],
       ["p","The core operation is the merge step of merge sort. Take several sorted SSTables, walk through them side by side, and write out one new sorted SSTable. When the same key appears in more than one input, keep the newest version. When the newest version is a tombstone that's old enough, drop the key entirely."],
       ["extra","<b>Compaction strategies.</b> <i>Size-tiered</i> compaction merges SSTables of similar size: it's cheap on writes, but leaves more files to check on reads. <i>Leveled</i> compaction keeps each level's SSTables non-overlapping: it rewrites more data, but a read touches fewer files. Cassandra lets you choose per table: leveled for read-heavy tables, size-tiered for write-heavy ones."],
-      ["p","This is the read-heavy vs write-heavy tuning the lecture asked about. More aggressive compaction means faster reads and more background I/O. Lazier compaction means faster writes and slower reads. The same engine can lean either way depending on the knob."]
+      ["p","This is the read-heavy vs write-heavy tuning question. More aggressive compaction means faster reads and more background I/O. Lazier compaction means faster writes and slower reads. The same engine can lean either way depending on the knob."]
     ] },
     { h: "Bloom filters: making “not found” cheap", blocks: [
       ["p","Here's the worst read in an LSM tree: a key that doesn't exist. You check the memtable, then every single SSTable, and only after reading a block from each do you get to say “not found”. If you have 50 SSTables, that's 50 disk reads to learn nothing."],

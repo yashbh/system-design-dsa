@@ -1,6 +1,5 @@
 /* Blueprint — DSA: recursion & backtracking, hashing, bit manipulation, strings.
- * Content from the user's notes (recursion1/2, Backtracking1/2, Hashing1/2/3, bitbasics, BitOne, BitTwo,
- * stringsbasics, kmp) plus LeetCode practice. New animations use the rhbs_ prefix.
+ * Worked examples plus LeetCode practice. New animations use the rhbs_ prefix.
  */
 (function () {
   const T = BP.DSA.topics;
@@ -128,7 +127,7 @@
           fr.push(F(8, `Prefix sum s = ${sum} has not been seen before: remember its first index, ${i}.`, [arr(a, { hl: { [i]: "act" } }), arr(pre.slice(), { label: "prefix", hl: { [i]: "act" } }), mp(sum), vars({ s: sum, ans })]));
         }
       });
-      fr.push(F(9, best ? `Longest zero-sum subarray: indices ${best[0]}..${best[1]}, length <b>${ans}</b>. O(N) time and space.` : "No zero-sum subarray (answer 0; the notes return −1).", [arr(a, best ? { win: best } : {}), mp(null), vars({ ans })]));
+      fr.push(F(9, best ? `Longest zero-sum subarray: indices ${best[0]}..${best[1]}, length <b>${ans}</b>. O(N) time and space.` : "No zero-sum subarray (answer 0; some versions return −1).", [arr(a, best ? { win: best } : {}), mp(null), vars({ ans })]));
       return fr;
     } };
 
@@ -175,7 +174,7 @@
     } };
 
   A.rhbs_singleII = { title: "Per-bit counting: the single number when others repeat k times", inputLabel: "array | k", input: "5 7 5 4 7 11 11 9 11 7 5 4 4 | 3",
-    presets: [["k = 3 (notes, answer 9)", "5 7 5 4 7 11 11 9 11 7 5 4 4 | 3"], ["k = 3 (answer 11)", "4 5 5 4 11 6 6 4 5 6 | 3"], ["k = 2 (Single Number I)", "2 3 5 6 3 6 2 | 2"]],
+    presets: [["k = 3 (answer 9)", "5 7 5 4 7 11 11 9 11 7 5 4 4 | 3"], ["k = 3 (answer 11)", "4 5 5 4 11 6 6 4 5 6 | 3"], ["k = 2 (Single Number I)", "2 3 5 6 3 6 2 | 2"]],
     about: "Rows are the numbers written in binary, columns are bit positions. For each column we count the 1s; every value that repeats k times adds k, so count % k leaves only the single number's bit.",
     code: ["ans = 0","for i in range(32):","    cnt = 0","    for x in arr:","        cnt += (x >> i) & 1       # does x have bit i?","    if cnt % k == 1:","        ans |= 1 << i             # the single number has bit i","return ans"],
     gen(s) {
@@ -217,7 +216,7 @@
 
   /* ═════════ STRINGS ═════════ */
   A.rhbs_expandCentre = { title: "Longest palindromic substring: expand around every centre", inputLabel: "string", input: "feacabacabgf",
-    presets: [["Notes: feacabacabgf", "feacabacabgf"], ["anamadamm", "anamadamm"], ["Even centre", "cabbad"]],
+    presets: [["feacabacabgf", "feacabacabgf"], ["anamadamm", "anamadamm"], ["Even centre", "cabbad"]],
     about: "Each step picks a centre (a character for odd lengths, a gap for even lengths) and grows l and r outward while the two ends match. Green is the palindrome found; red marks the first pair that did not match.",
     code: ["def expand(l, r):","    while l >= 0 and r < N and s[l] == s[r]:","        l -= 1","        r += 1","    return r - l - 1              # l, r stop one step outside","ans = 0","for i in range(N):","    len1 = expand(i - 1, i + 1)   # odd: centre on s[i]","    len2 = expand(i, i + 1)       # even: centre on the gap","    ans = max(ans, len1, len2)"],
     gen(str) {
@@ -243,7 +242,7 @@
     } };
 
   A.rhbs_kmpSearch = { title: "KMP matching: LPS of P + '#' + T", inputLabel: "text | pattern | (no #)", input: "dabceabc | abc",
-    presets: [["Notes example", "dabceabc | abc"], ["Overlaps: aa in aaaa", "aaaa | aa"], ["Without '#' (wrong)", "aaaa | aa | no #"]],
+    presets: [["Worked example", "dabceabc | abc"], ["Overlaps: aa in aaaa", "aaaa | aa"], ["Without '#' (wrong)", "aaaa | aa | no #"]],
     about: "The top row is S = P + '#' + T, the bottom row its LPS array. Pointer i walks S and x is the border being extended; on a mismatch x falls back to a shorter border. Every lps value equal to M = len(P) marks a match in T.",
     code: ["S = P + '#' + T","lps = [0] * len(S)","for i in range(1, len(S)):","    x = lps[i - 1]","    while S[i] != S[x]:","        if x == 0:","            x = -1","            break","        x = lps[x - 1]        # fall back to a shorter border","    lps[i] = x + 1","    if lps[i] == M:","        count += 1            # a match ends at i"],
     gen(s) {
@@ -274,7 +273,6 @@
   /* ═══════════════════════════ TOPIC: RECURSION ═══════════════════════════ */
   T["recursion"] = {
     name: "Recursion & backtracking", icon: "🌀", color: "#7c3aed", minutes: 75,
-    notes: "recursion1.pdf, recursion2.pdf, Backtracking1.pdf, Backtracking2.pdf",
     summary: "Solve a problem by trusting a smaller copy of it; backtracking uses the same idea to try every choice and undo the ones that fail.",
     sections: [
       { h: "The idea and the 3-step recipe", blocks: [
@@ -585,7 +583,6 @@
   /* ═══════════════════════════ TOPIC: HASHING ═══════════════════════════ */
   T["hashing"] = {
     name: "Hashing", icon: "#️⃣", color: "#0f9d74", minutes: 60,
-    notes: "Hashing1.pdf, Hashing2.pdf, hashing3.pdf",
     summary: "A hash map stores only the keys that exist and finds any of them in O(1) on average, which turns many O(N²) searches into one pass.",
     sections: [
       { h: "Why hashing", blocks: [
@@ -679,7 +676,7 @@
       { h: "Prefix sums + hashing", blocks: [
         ["analogy", "Your bank balance goes 100 → 120 → 150 → 110 → 100. Because it came back to 100, the transactions in between must have added up to 0. A <b>repeated prefix sum</b> means a <b>zero-sum subarray</b>."],
         ["p", "sum(i..j) = P[j] − P[i−1]. It is 0 exactly when P[j] = P[i−1], and it is K exactly when P[i−1] = P[j] − K. So keep the prefix sums seen so far in a hash set or map."],
-        ["warn", "<b>Seed the structure with prefix sum 0</b> (set {0}, map {0: 1} for counting, or {0: −1} for lengths). It stands for the empty prefix before index 0. Without it, a subarray that starts at index 0 is missed: [−2,−1,3,5] has a zero-sum prefix, and [5, …] with K = 5 should be true. The notes forget this seed in the sum-K code; it is fixed below."],
+        ["warn", "<b>Seed the structure with prefix sum 0</b> (set {0}, map {0: 1} for counting, or {0: −1} for lengths). It stands for the empty prefix before index 0. Without it, a subarray that starts at index 0 is missed: [−2,−1,3,5] has a zero-sum prefix, and [5, …] with K = 5 should be true. The sum-K code below includes this seed."],
         ["viz", "subarraySumK", "Counting version: freq starts as {0: 1}. At each step add how many earlier prefixes equal ps − k."],
         ["viz", "rhbs_zeroSumLongest", "Longest version: store only the FIRST index of each prefix sum, seeded 0 → −1. Never overwrite."],
         ["probs", [
@@ -700,11 +697,11 @@
                 idea: "Running sum from every start index. Too slow for N = 10^6.",
                 code: "def has_sum_k(arr, k):\n    n = len(arr)\n    for i in range(n):\n        s = 0\n        for j in range(i, n):\n            s += arr[j]\n            if s == k:\n                return True\n    return False" },
               { n: "Optimal", cx: "O(N) time · O(N) space",
-                idea: "At each prefix sum s ask: <b>has s − K been seen as an earlier prefix?</b> Seed the set with 0 so a match starting at index 0 counts (the notes miss this seed).",
-                code: "def has_sum_k(arr, k):\n    seen = {0}                 # seed 0 (missing in the notes)\n    s = 0\n    for x in arr:\n        s += x\n        if s - k in seen:\n            return True\n        seen.add(s)\n    return False" }
+                idea: "At each prefix sum s ask: <b>has s − K been seen as an earlier prefix?</b> Seed the set with 0 so a match starting at index 0 counts (easy to forget).",
+                code: "def has_sum_k(arr, k):\n    seen = {0}                 # seed 0 (easy to forget)\n    s = 0\n    for x in arr:\n        s += x\n        if s - k in seen:\n            return True\n        seen.add(s)\n    return False" }
             ],
             edge: "Sliding windows do not work with negative numbers; this does. Use 64-bit sums." },
-          { t: "Count subarrays with sum K", d: "Medium", q: "Return how many subarrays sum to K (homework in the notes).",
+          { t: "Count subarrays with sum K", d: "Medium", q: "Return how many subarrays sum to K.",
             ex: "[1,1,1], K = 2 → 2\n[1,2,3], K = 3 → 2",
             ap: [
               { n: "Brute force", cx: "O(N²) time · O(1) space",
@@ -725,7 +722,7 @@
                 idea: "Equal prefix sums at j &lt; i mean (j..i] sums to 0 with length i − j. To maximise the length, keep only the <b>first occurrence</b> of each prefix sum, seeded 0 → −1.",
                 code: "def longest_zero_sum(arr):\n    first = {0: -1}            # empty prefix ends before index 0\n    s = 0\n    ans = 0\n    for i, x in enumerate(arr):\n        s += x\n        if s in first:\n            ans = max(ans, i - first[s])\n        else:\n            first[s] = i       # never overwrite\n    return ans" }
             ],
-            edge: "Whole array sums to 0 → length N (the seed handles it). A single 0 is length 1. Overwriting the first index gives shorter, wrong answers. The notes return −1 when none exists; many judges want 0.",
+            edge: "Whole array sums to 0 → length N (the seed handles it). A single 0 is length 1. Overwriting the first index gives shorter, wrong answers. Some versions return −1 when none exists; many judges want 0.",
             viz: "rhbs_zeroSumLongest" }
         ]],
         ["tip", "Binary array version: replace each 0 by −1 and the longest subarray with equal 0s and 1s becomes the longest zero-sum subarray (LC 525, Contiguous Array)."]
@@ -762,7 +759,7 @@
           ["after inserting 35, 6, 3, 8", "11 / 5", "2.2 > 2.0"],
           ["rehash: double to 10 buckets, reinsert with % 10", "11 / 10", "1.1"]
         ], "Each operation scans one chain: O(λ). Keeping λ bounded by rehashing keeps it O(1). A rehash is O(n), but doubling makes it amortised O(1) per insert."],
-        ["viz", "rhbs_hashChain", "The notes' example: frequencies with % 5, collisions append to chains, and inserting 8 pushes λ past 2.0 and triggers a rehash to 10 buckets."],
+        ["viz", "rhbs_hashChain", "Example: frequencies with % 5, collisions append to chains, and inserting 8 pushes λ past 2.0 and triggers a rehash to 10 buckets."],
         ["code", "class HashMap:\n    def __init__(self, m=8):\n        self.m = m                                 # number of buckets\n        self.n = 0                                 # number of nodes\n        self.buckets = [[] for _ in range(m)]      # each bucket is a chain of [key, value]\n\n    def _chain(self, key):\n        return self.buckets[hash(key) % self.m]\n\n    def put(self, key, value):\n        chain = self._chain(key)\n        for node in chain:\n            if node[0] == key:\n                node[1] = value                    # key exists: update\n                return\n        chain.append([key, value])                 # new node in the chain\n        self.n += 1\n        if self.n / self.m > 2.0:                  # load factor too high\n            self._rehash()\n\n    def get(self, key, default=None):\n        for k, v in self._chain(key):              # scan one chain: O(load factor)\n            if k == key:\n                return v\n        return default\n\n    def remove(self, key):\n        chain = self._chain(key)\n        for i, node in enumerate(chain):\n            if node[0] == key:\n                chain.pop(i)\n                self.n -= 1\n                return\n\n    def _rehash(self):\n        old = self.buckets\n        self.m *= 2\n        self.buckets = [[] for _ in range(self.m)]\n        for chain in old:\n            for k, v in chain:\n                self.buckets[hash(k) % self.m].append([k, v])"],
         ["extra", "<b>Open addressing</b> is the other collision strategy: store everything in the array itself and, on a collision, probe for the next free slot (linear probing: b+1, b+2, …; quadratic: b+1², b+2², …). Java's HashMap uses chaining and turns long chains into balanced trees; Python's dict uses open addressing. A bad hash function (or adversarial keys) can put everything in one bucket, so the worst case is O(N) per operation."],
         ["probs", [
@@ -824,7 +821,7 @@
       { q: "In the prefix-sum + set approach for “subarray with sum K exists”, what must the set start with?", o: ["Nothing", "0", "K", "arr[0]"], a: 1, why: "0 is the empty prefix. Without it, a subarray starting at index 0 (prefix sum exactly K) is missed." },
       { q: "For the longest zero-sum subarray, which index do you store for each prefix sum?", o: ["The latest", "The first", "Both", "The middle"], a: 1, why: "The length is i − j; keeping the earliest j maximises it. Overwriting gives shorter answers." },
       { q: "Distinct elements in every window: why is a HashSet not enough?", o: ["It can't count", "Removing the outgoing value deletes it even if a copy is still in the window", "It is unordered", "It uses too much memory"], a: 1, why: "You need counts so a value is removed only when its last copy leaves." },
-      { q: "A table has 5 buckets and 11 nodes. What is the load factor?", o: ["0.45", "2.2", "11", "5"], a: 1, why: "λ = nodes / buckets = 11 / 5 = 2.2, above the notes' 2.0 threshold, so it rehashes to 10 buckets (λ = 1.1)." },
+      { q: "A table has 5 buckets and 11 nodes. What is the load factor?", o: ["0.45", "2.2", "11", "5"], a: 1, why: "λ = nodes / buckets = 11 / 5 = 2.2, above the 2.0 threshold, so it rehashes to 10 buckets (λ = 1.1)." },
       { q: "Why walk the array, not the map, to find the first non-repeating element?", o: ["The map is slower", "The map has no order", "The array has fewer elements", "It doesn't matter"], a: 1, why: "Hash maps do not keep insertion order (Java HashMap, C++ unordered_map), so “first” must come from the array." },
       { q: "With key % 17, which pair collides among 10, 20, 30, 27?", o: ["10 and 20", "10 and 27", "20 and 30", "None"], a: 1, why: "10 % 17 = 10 and 27 % 17 = 10." }
     ]
@@ -833,7 +830,6 @@
   /* ═══════════════════════════ TOPIC: BIT MANIPULATION ═══════════════════════════ */
   T["bits"] = {
     name: "Bit manipulation", icon: "🔢", color: "#d9480f", minutes: 70,
-    notes: "bitbasics.pdf, BitOne.pdf, BitTwo.pdf (+ XOR problem from recursion1/2)",
     summary: "Numbers are rows of bits; a handful of operators (& | ^ ~ << >>) and the XOR cancellation trick solve many problems in O(1) extra space.",
     sections: [
       { h: "Binary numbers", blocks: [
@@ -911,8 +907,8 @@
             ex: "N = 45 (101101), i = 2 → 41 (101001)",
             ap: [
               { n: "Solution", cx: "O(1) time · O(1) space",
-                idea: "Notes: if the bit is set, toggle it with XOR. One expression: <b>N & ~(1 &lt;&lt; i)</b>, because ~mask has every bit set except i.",
-                code: "def unset_bit(n, i):\n    mask = 1 << i\n    if n & mask:               # notes' version: toggle only if set\n        n ^= mask\n    return n\n\ndef unset_bit_direct(n, i):\n    return n & ~(1 << i)" }
+                idea: "If the bit is set, toggle it with XOR. One expression: <b>N & ~(1 &lt;&lt; i)</b>, because ~mask has every bit set except i.",
+                code: "def unset_bit(n, i):\n    mask = 1 << i\n    if n & mask:               # toggle only if set\n        n ^= mask\n    return n\n\ndef unset_bit_direct(n, i):\n    return n & ~(1 << i)" }
             ] },
           { t: "Count set bits", d: "Easy", q: "Count the 1 bits of N.",
             ex: "12 = 1100 → 2",
@@ -1013,7 +1009,7 @@
             ex: "[27,18,20] → 18 (27&18 = 18, 27&20 = 16, 18&20 = 16)\n[26,13,23,28,27,7,25]:\n  bit4: 5 have it → set; drop 13, 7\n  bit3: 26,28,27,25 → set; drop 23\n  bit2: only 28 → skip\n  bit1: 26, 27 → set; drop 28, 25\n  bit0: only 27 → skip\n  ans = 11010 = 26",
             ap: [
               { n: "Brute force", cx: "O(N²) time · O(1) space",
-                idea: "Try all pairs. Shortcuts like “max & second max” or “min & max” both fail (crossed out in the notes).",
+                idea: "Try all pairs. Shortcuts like “max & second max” or “min & max” both fail.",
                 code: "def max_and(arr):\n    best = 0\n    n = len(arr)\n    for i in range(n):\n        for j in range(i + 1, n):\n            best = max(best, arr[i] & arr[j])\n    return best" },
               { n: "Optimal", cx: "O(31·N) time · O(1) space",
                 idea: "Higher bits outweigh all lower bits together, so go from bit 30 down. If <b>at least 2</b> still-eligible numbers have the bit, put it in the answer and <b>zero out every number without it</b>. Otherwise skip the bit. Follow-up (count pairs reaching the max): with x non-zero survivors, the count is x(x−1)/2.",
@@ -1042,8 +1038,8 @@
             ] }
         ]]
       ] },
-      { h: "Also in these notes", blocks: [
-        ["p", "These pages sit inside the bit-manipulation notes but are counting / array problems."],
+      { h: "Related counting problems", blocks: [
+        ["p", "These sit next to bit manipulation but are counting / array problems."],
         ["probs", [
           { t: "Element p with exactly p greater elements", d: "Medium", q: "Is there an element p such that exactly p elements are greater than it? Return 1 or −1.",
             ex: "[7,3,2,4,9,-2,15,11] → sorted [-2,2,3,4,7,9,11,15] → 4 has 4 greater → 1\n[-2,2,2,3,4,4,7,7,9,11,11,15] → -1",
@@ -1131,7 +1127,6 @@
   /* ═══════════════════════════ TOPIC: STRINGS ═══════════════════════════ */
   T["strings"] = {
     name: "Strings", icon: "🔤", color: "#c2255c", minutes: 60,
-    notes: "stringsbasics.pdf, kmp.pdf",
     summary: "A string is an array of characters; most problems use ASCII arithmetic, two pointers, expand-around-centre or the KMP prefix function.",
     sections: [
       { h: "Characters and ASCII", blocks: [
@@ -1159,7 +1154,7 @@
         ["p", "A palindrome reads the same both ways: madam, nayan, malayalam, tenet, maddam. \"dalda\" is not: its second pair (a, d) does not match. Compare the outer pair, then move inward."],
         ["viz", "palindrome", "Two pointers walk inward; the first mismatch ends it."],
         ["p", "<b>Longest palindromic substring:</b> every palindrome has a centre. Odd-length ones centre on a character, even-length ones on the gap between two characters. That gives 2N − 1 centres; grow outward from each while the ends match."],
-        ["viz", "rhbs_expandCentre", "The notes' table for \"feacabacabgf\": the odd length around each centre is f1 e1 a1 c3 a1 b7 a1 c5 a1 b1 g1 f1."],
+        ["viz", "rhbs_expandCentre", "The table for \"feacabacabgf\": the odd length around each centre is f1 e1 a1 c3 a1 b7 a1 c5 a1 b1 g1 f1."],
         ["probs", [
           { t: "Check palindrome", d: "Easy", q: "Is s a palindrome?",
             ex: "madam → true\ndalda → false",
@@ -1192,14 +1187,14 @@
       ] },
       { h: "Strings are immutable", blocks: [
         ["p", "In Java, C#, JS, Python and Go a string object never changes. <code>str = \"Jitu\"; str = \"jitender\";</code> creates a new object at a new address (8K) and moves the reference from 4K to 8K. <b>The instance is immutable; the reference is mutable.</b>"],
-        ["p", "<b>String constant pool:</b> <code>s1 = \"scaler\"; s2 = \"scaler\";</code> both point to one pooled object. Sharing is only safe because nobody can modify it. <code>new String(\"scaler\")</code> makes a separate heap object outside the pool."],
+        ["p", "<b>String constant pool:</b> <code>s1 = \"hello\"; s2 = \"hello\";</code> both point to one pooled object. Sharing is only safe because nobody can modify it. <code>new String(\"hello\")</code> makes a separate heap object outside the pool."],
         ["table", ["Statement", "s1 →", "s2 →"], [
           ["s1 = \"Hello\"", "\"Hello\" (pool)", "—"],
           ["s2 = new String(\"World\")", "\"Hello\"", "\"World\" (heap 8K)"],
           ["s1 = s2", "\"World\" (heap 8K)", "\"World\" (heap 8K)"],
           ["s2 = \"Kite\"", "\"World\" (heap 8K)", "\"Kite\" (pool 15K)"]
         ]],
-        ["warn", "<b>== compares addresses, not content.</b> With s1 = \"scaler\", s2 = new String(\"scaler\"), s3 = \"scaler\": s1 == s3 is true (same pooled object) but s1 == s2 is false. Use <code>.equals()</code>, which compares characters in O(N)."],
+        ["warn", "<b>== compares addresses, not content.</b> With s1 = \"hello\", s2 = new String(\"hello\"), s3 = \"hello\": s1 == s3 is true (same pooled object) but s1 == s2 is false. Use <code>.equals()</code>, which compares characters in O(N)."],
         ["warn", "<b>Concatenation in a loop is O(N²).</b> <code>str = str + 'c'</code> copies the whole string each time (\"Java\" + s, c, r, i, p, t makes a new object per step). Use a <b>StringBuilder</b> (Java), a list + ''.join (Python) or an array + join (JS): amortised O(1) per append."],
         ["code", "parts = []\nfor c in chars:\n    parts.append(c)            # amortised O(1), like StringBuilder.append\nresult = ''.join(parts)        # one O(N) copy at the end"]
       ] },
@@ -1227,7 +1222,7 @@
                 idea: "Consecutive letters always have <b>opposite ASCII parity</b> (a = 97 odd, b = 98 even). Split into an odd group (a, c, e, …) and an even group (b, d, f, …): letters inside a group differ by at least 2, so each group is safe in any order. Only the <b>single junction</b> between the groups can fail. Checking the extremes is enough: test (oddMin, evenMin), (oddMin, evenMax), (oddMax, evenMin), (oddMax, evenMax); if any pair is not consecutive, answer true.",
                 code: "def can_arrange(s):\n    odd = [c for c in s if ord(c) % 2 == 1]\n    even = [c for c in s if ord(c) % 2 == 0]\n    if not odd or not even:\n        return True                    # one group: no junction at all\n    for o in (min(odd), max(odd)):\n        for e in (min(even), max(even)):\n            if abs(ord(o) - ord(e)) != 1:\n                return True            # put o and e at the junction\n    return False" }
             ],
-            edge: "If all characters share a parity, the answer is true. odd aaacceggg / even bbdff: a–b ✗, g–f ✗, a–f ✓ → true. Slower junction checks from the notes: all odd × even pairs (≤ 13 × 13 unique) or a hash set per character." }
+            edge: "If all characters share a parity, the answer is true. odd aaacceggg / even bbdff: a–b ✗, g–f ✗, a–f ✓ → true. Slower junction checks: all odd × even pairs (≤ 13 × 13 unique) or a hash set per character." }
         ]]
       ] },
       { h: "KMP: the LPS array and pattern matching", blocks: [
@@ -1260,7 +1255,7 @@
                 idea: "<b>Extend or fall back</b>: start x = LPS[i−1]; while s[i] ≠ s[x], jump x = LPS[x−1] (if x is already 0, the answer is 0). Then LPS[i] = x + 1. Total fall-backs ≤ total rises ≤ N, so it is O(N) amortised.",
                 code: "def compute_lps(s):\n    n = len(s)\n    lps = [0] * n\n    for i in range(1, n):\n        x = lps[i - 1]\n        while s[i] != s[x]:\n            if x == 0:\n                x = -1                 # sentinel: lps[i] becomes 0\n                break\n            x = lps[x - 1]             # fall back to a shorter border\n        lps[i] = x + 1\n    return lps" }
             ],
-            edge: "N = 1 → [0]. The notes use x = −1 as a sentinel so LPS[i] = x + 1 = 0.",
+            edge: "N = 1 → [0]. x = −1 works as a sentinel, so LPS[i] = x + 1 = 0.",
             viz: "kmpLPS", lc: "longest-happy-prefix" },
           { t: "Count occurrences of a pattern (KMP)", d: "Medium", q: "Count where pattern P (length M) occurs in text T (length N), overlaps allowed.",
             ex: "T = dabceabc, P = abc → S = abc#dabceabc\n  LPS = [0,0,0,0,0,1,2,3,0,1,2,3] → 2 matches\nT = aaaa, P = aa → 3",
@@ -1275,7 +1270,7 @@
             edge: "Pick a delimiter that cannot occur in either string. To save space, compute LPS of P only and scan T with the same extend/fall-back loop.",
             viz: "rhbs_kmpSearch", lc: "find-the-index-of-the-first-occurrence-in-a-string" }
         ]],
-        ["tip", "The notes call this an online-assessment favourite. Other LPS uses: shortest palindrome (LPS of s + '#' + reverse(s)), repeated substring pattern (LPS > 0 and N % (N − LPS) == 0), and the longest happy prefix (the last LPS value)."]
+        ["tip", "This is an online-assessment favourite. Other LPS uses: shortest palindrome (LPS of s + '#' + reverse(s)), repeated substring pattern (LPS > 0 and N % (N − LPS) == 0), and the longest happy prefix (the last LPS value)."]
       ] },
       { h: "Interview cheatsheet", blocks: [
         ["table", ["Problem shape", "Technique", "Cost"], [
@@ -1320,7 +1315,7 @@
     quiz: [
       { q: "How many non-empty substrings does a string of length N have?", o: ["N", "N(N+1)/2", "2^N", "N²"], a: 1, why: "Choose a start and an end with start ≤ end: N(N+1)/2. 2^N counts subsequences (including the empty one)." },
       { q: "Expand-around-centre stops with l and r one step outside the palindrome. Its length is…", o: ["r − l", "r − l + 1", "r − l − 1", "(r − l) / 2"], a: 2, why: "The palindrome is s[l+1 .. r−1], which has (r − 1) − (l + 1) + 1 = r − l − 1 characters." },
-      { q: "Why does Java's s1 == s2 return false for s1 = \"scaler\" and s2 = new String(\"scaler\")?", o: ["Different content", "== compares references and new String makes a separate object", "Strings are mutable", "Case differs"], a: 1, why: "s1 points into the string pool, s2 to a separate heap object. Use .equals() for content." },
+      { q: "Why does Java's s1 == s2 return false for s1 = \"hello\" and s2 = new String(\"hello\")?", o: ["Different content", "== compares references and new String makes a separate object", "Strings are mutable", "Case differs"], a: 1, why: "s1 points into the string pool, s2 to a separate heap object. Use .equals() for content." },
       { q: "What is LPS(\"aabaaba\")?", o: ["3", "4", "7", "1"], a: 1, why: "\"aaba\" is both a prefix and a suffix. The whole string is excluded by definition." },
       { q: "Why do we put '#' between P and T in KMP matching?", o: ["To speed it up", "So no LPS value can exceed |P|", "To mark the end of T", "It is optional"], a: 1, why: "A border can't cross a character that appears in neither string, so LPS ≤ M and LPS == M means exactly one full match." },
       { q: "Why is computing the LPS array O(N) despite the inner while loop?", o: ["The loop runs at most once", "Total fall-backs ≤ total rises ≤ N", "Strings are short", "It is O(N log N)"], a: 1, why: "x rises by at most 1 per index and each fall-back lowers it, so over the whole run the fall-backs are bounded by N." },

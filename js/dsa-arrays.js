@@ -1,7 +1,5 @@
 /* Blueprint — DSA: complexity, arrays, sliding window & two pointers, 2-D arrays.
- * Content from the user's notes (time-complexity.pdf, intermediate-1, arrayProblems, prefixsum, carryforward,
- * sliding-window, 2Pointer, 2dArray, 2dArrayProblemsAdvanced, 1dArrayProblemsAdvanced, AdvancedInterviewArray,
- * Sorting, ArrayContest, ArrayIntermediateContest) plus LeetCode practice.
+ * Lessons plus LeetCode practice.
  */
 (function () {
   const T = BP.DSA.topics;
@@ -33,7 +31,7 @@
     } };
 
   A.arr_rotate = { title: "Rotate right by K with three reversals", inputLabel: "array | K", input: "31 17 21 19 16 | 3",
-    presets: [["Notes example (K = 3)", "31 17 21 19 16 | 3"], ["K bigger than N (K = 7)", "10 20 30 40 50 | 7"], ["K = 0", "1 2 3 4 | 0"]],
+    presets: [["Example (K = 3)", "31 17 21 19 16 | 3"], ["K bigger than N (K = 7)", "10 20 30 40 50 | 7"], ["K = 0", "1 2 3 4 | 0"]],
     about: "Rotating right by K = three in-place reversals. The shaded window is the part being reversed; arrows l and r swap and walk inward.",
     code: ["K = K % N", "reverse(a, 0, N - 1)", "reverse(a, 0, K - 1)", "reverse(a, K, N - 1)", "", "def reverse(a, l, r):", "    while l < r:", "        a[l], a[r] = a[r], a[l]", "        l += 1", "        r -= 1"],
     gen(s) {
@@ -76,7 +74,7 @@
     } };
 
   A.arr_moore = { title: "Moore's voting: majority element (> N/2)", inputLabel: "array", input: "4 4 3 8 8 4 9 4 4",
-    presets: [["Notes walkthrough", "4 4 3 8 8 4 9 4 4"], ["No majority (exactly N/2)", "3 3 4 2 4 4 2 4"], ["[3 4 3 2 4 4 4]", "3 4 3 2 4 4 4"]],
+    presets: [["Walkthrough", "4 4 3 8 8 4 9 4 4"], ["No majority (exactly N/2)", "3 3 4 2 4 4 2 4"], ["[3 4 3 2 4 4 4]", "3 4 3 2 4 4 4"]],
     about: "Green cells are votes still standing for the candidate; grey cells were cancelled in pairs of two different values. The survivor is verified at the end.",
     code: ["ele = a[0]", "freq = 1", "for i in range(1, N):", "    if freq == 0:", "        ele = a[i]", "        freq = 1", "    elif a[i] == ele:", "        freq += 1", "    else:", "        freq -= 1          # cancel two different values", "return ele if a.count(ele) > N // 2 else None   # verify"],
     gen(s) {
@@ -96,7 +94,7 @@
     } };
 
   A.arr_diffArray = { title: "Difference array: Q range updates [s, e, +v] in O(N + Q)", inputLabel: "N | s e v, s e v, …", input: "8 | 1 4 3, 0 5 -1, 2 2 4, 4 6 3",
-    presets: [["Notes N = 8", "8 | 1 4 3, 0 5 -1, 2 2 4, 4 6 3"], ["Notes N = 10", "10 | 3 6 3, 2 7 -3, 1 9 4"]],
+    presets: [["N = 8", "8 | 1 4 3, 0 5 -1, 2 2 4, 4 6 3"], ["N = 10", "10 | 3 6 3, 2 7 -3, 1 9 4"]],
     about: "Top row: the marks each query drops (+v at s, −v at e + 1). Bottom row: the prefix-sum sweep turning marks into the final values.",
     code: ["for s, e, v in queries:", "    a[s] += v", "    if e + 1 < N:", "        a[e + 1] -= v", "for i in range(1, N):", "    a[i] += a[i - 1]      # prefix sum spreads each mark"],
     gen(x) {
@@ -117,7 +115,7 @@
     } };
 
   A.arr_rainWater = { title: "Rain water trapped: two pointers, O(1) space", inputLabel: "heights", input: "2 1 3 2 1 2 4 3 2 1 3 1",
-    presets: [["Notes example (8)", "2 1 3 2 1 2 4 3 2 1 3 1"], ["Contest example (16)", "3 4 3 7 0 3 4 9 5 3 4"], ["LeetCode (6)", "0 1 0 2 1 0 1 3 2 1 2 1"]],
+    presets: [["Example (8)", "2 1 3 2 1 2 4 3 2 1 3 1"], ["Contest example (16)", "3 4 3 7 0 3 4 9 5 3 4"], ["LeetCode (6)", "0 1 0 2 1 0 1 3 2 1 2 1"]],
     about: "Bars are buildings, blue is trapped water. Pointers i and j close in; each step settles the water on the side with the lower wall.",
     code: ["i, j = 0, N - 1", "lmax = rmax = ans = 0", "while i <= j:", "    if h[i] <= h[j]:            # a wall >= h[i] exists on the right", "        if h[i] > lmax:", "            lmax = h[i]", "        else:", "            ans += lmax - h[i]", "        i += 1", "    else:                       # a wall > h[j] exists on the left", "        if h[j] > rmax:", "            rmax = h[j]", "        else:", "            ans += rmax - h[j]", "        j -= 1", "return ans"],
     gen(s) {
@@ -145,7 +143,7 @@
 
   A.arr_mergeIntervals = { title: "Merge overlapping intervals (sorted by start)", inputLabel: "intervals like 0-2 1-4 …", input: "0-2 1-4 5-6 6-8 7-10 8-9 12-14",
     about: "Each bar is an input interval; the bar labelled cur is the interval being grown. Green = absorbed into cur, grey = already committed to the answer.",
-    presets: [["Notes example", "0-2 1-4 5-6 6-8 7-10 8-9 12-14"], ["Touching ends", "3-6 6-10 11-12"], ["One big cover", "1-10 2-3 4-5 6-12"]],
+    presets: [["Example", "0-2 1-4 5-6 6-8 7-10 8-9 12-14"], ["Touching ends", "3-6 6-10 11-12"], ["One big cover", "1-10 2-3 4-5 6-12"]],
     code: ["iv.sort()                      # by start", "l, r = iv[0]", "for s, e in iv[1:]:", "    if s <= r:", "        r = max(r, e)          # overlap: absorb", "    else:", "        ans.append((l, r))     # gap: commit", "        l, r = s, e", "ans.append((l, r))"],
     gen(s) {
       const iv = cap(String(s).split(/\s+/).filter(Boolean).map((p) => p.split("-").map(Number)).filter((p) => p.length === 2 && p.every((x) => !Number.isNaN(x))), 10, "intervals").map(([a, b]) => [Math.min(a, b), Math.max(a, b)]).sort((x, y) => x[0] - y[0] || x[1] - y[1]);
@@ -188,7 +186,7 @@
     } };
 
   A.arr_container = { title: "Container with most water: move the shorter wall", inputLabel: "heights", input: "3 5 4 7 3 6 5 4 1 2",
-    presets: [["Notes example (25)", "3 5 4 7 3 6 5 4 1 2"], ["LeetCode (49)", "1 8 6 2 5 4 8 3 7"]],
+    presets: [["Example (25)", "3 5 4 7 3 6 5 4 1 2"], ["LeetCode (49)", "1 8 6 2 5 4 8 3 7"]],
     about: "The shaded rectangle is the water held by walls i and j: width j − i, height of the shorter wall. Watch the shorter wall get dropped each step.",
     code: ["ans = 0", "i, j = 0, N - 1", "while i < j:", "    ans = max(ans, (j - i) * min(A[i], A[j]))", "    if A[i] <= A[j]:", "        i += 1         # shorter wall can't do better", "    else:", "        j -= 1", "return ans"],
     gen(s) {
@@ -256,7 +254,6 @@
   /* ═════════ Topic: complexity ═════════ */
   T["complexity"] = {
     name: "Time & space complexity", icon: "⏱️", color: "#6d28d9", minutes: 40,
-    notes: "time-complexity.pdf, intermediate-1.pdf",
     summary: "Count how many times your loops run, keep only the fastest-growing term, and check it against the 10^8-operations-per-second budget before you code.",
     sections: [
       { h: "Why we measure growth, not seconds", blocks: [
@@ -421,14 +418,13 @@
       { q: "Simplify 4N log N + 3N√N + 10^6.", o: ["O(N log N)", "O(N√N)", "O(10^6)", "O(N)"], a: 1, why: "√N grows faster than log N, so N√N dominates." },
       { q: "Summing 10^6 values each up to 10^9 into an int will…", o: ["work fine", "overflow; use long", "be slow", "lose decimals"], a: 1, why: "The sum can reach 10^15, beyond int max ≈ 2.1·10^9." },
       { q: "Why do we do K = K % N before rotating?", o: ["To make K negative", "Rotating N times gives back the same array", "To sort the array", "It is required by reverse()"], a: 1, why: "Rotations repeat every N steps; K up to 10^9 shrinks to less than N." },
-      { q: "Which is NOT counted in space complexity (as the notes define it)?", o: ["A temporary array of size N", "A hash map you build", "The input array", "A recursion stack"], a: 2, why: "Input and output space are excluded; only extra memory counts." }
+      { q: "Which is NOT counted in space complexity (as defined here)?", o: ["A temporary array of size N", "A hash map you build", "The input array", "A recursion stack"], a: 2, why: "Input and output space are excluded; only extra memory counts." }
     ]
   };
 
   /* ═════════ Topic: arrays ═════════ */
   T["arrays"] = {
     name: "Arrays, prefix sums & carry forward", icon: "📊", color: "#2456d6", minutes: 90,
-    notes: "prefixsum, carryforward, arrayProblems, 1dArrayProblemsAdvanced, AdvancedInterviewArray, Sorting, contests",
     summary: "Precompute once (prefix sums, running max/count) so every later question is O(1), and learn the handful of one-pass tricks: Kadane, difference array, Moore voting, cyclic placement.",
     sections: [
       { h: "Prefix sums: the cricket scoreboard", blocks: [
@@ -506,7 +502,7 @@
         ]]
       ] },
       { h: "Carry forward and subarrays", blocks: [
-        ["p", "<b>Carry forward</b>: while scanning, keep a running value (count, max, min, sum, last index seen) that summarises one side, so each new element is answered in O(1) instead of rescanning. Rule from the notes: if the max / min / sum / index of something is needed again and again, carry it forward."],
+        ["p", "<b>Carry forward</b>: while scanning, keep a running value (count, max, min, sum, last index seen) that summarises one side, so each new element is answered in O(1) instead of rescanning. Rule of thumb: if the max / min / sum / index of something is needed again and again, carry it forward."],
         ["viz", "arr_carryAG", "countA carries the number of 'a's seen so far; each 'g' adds it to the answer."],
         ["p", "A <b>subarray</b> is a contiguous, non-empty slice that keeps order; a single element and the whole array both count. It is identified by (start, end). Starting at 0 there are N, at 1 there are N − 1, … so there are <b>N(N+1)/2</b> subarrays. Printing all of them with a k-loop is O(N³)."],
         ["probs", [
@@ -843,7 +839,6 @@
   /* ═════════ Topic: windows ═════════ */
   T["windows"] = {
     name: "Sliding window & two pointers", icon: "🪟", color: "#0e7c86", minutes: 60,
-    notes: "sliding-window.pdf, 2Pointer.pdf, contests",
     summary: "Reuse the work from the previous position: slide a window by adding one element and dropping one, or move two pointers so each comparison discards an element for good.",
     sections: [
       { h: "Why windows and pointers work", blocks: [
@@ -951,7 +946,7 @@
         ]]
       ] },
       { h: "Two pointers on sorted arrays", blocks: [
-        ["p", "Where do the pointers start? The notes try (0, 1), (N−1, N−2) and the middle and reject them: there, both moves change the sum the same way. For <b>pair sum</b> start at (0, N−1): i++ raises the sum, j−− lowers it. For <b>pair difference</b> start at (0, 1): j++ raises the difference, i++ lowers it ((0, N−1) fails because both moves lower it)."],
+        ["p", "Where do the pointers start? Starting at (0, 1), (N−1, N−2) or the middle doesn't work: there, both moves change the sum the same way. For <b>pair sum</b> start at (0, N−1): i++ raises the sum, j−− lowers it. For <b>pair difference</b> start at (0, 1): j++ raises the difference, i++ lowers it ((0, N−1) fails because both moves lower it)."],
         ["viz", "twoPointer", "Pair sum: a too-small sum means a[i] can never pair with anything, so drop it."],
         ["probs", [
           { t: "Pair sum = K (sorted, distinct)", d: "Medium",
@@ -1093,7 +1088,6 @@
   /* ═════════ Topic: matrix ═════════ */
   T["matrix"] = {
     name: "2-D arrays (matrices)", icon: "🔲", color: "#b45309", minutes: 50,
-    notes: "2dArray.pdf, 2dArrayProblemsAdvanced.pdf, arrayProblems.pdf",
     summary: "Walk a grid with index arithmetic: rows, columns, diagonals, layers; rotate with transpose + reverse; search sorted matrices from the top-right corner.",
     sections: [
       { h: "How a matrix is stored and walked", blocks: [

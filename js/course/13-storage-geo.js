@@ -5,7 +5,6 @@ BP.LESSONS.push({
   icon: "🗺️",
   minutes: 22,
   title: "Case study: large-file storage (S3/HDFS) & nearest neighbours (quadtrees, Uber)",
-  scaler: "HLD 14 · Case Study: S3, HDFS + Quad Trees · HLD 15 · Design Uber",
   summary: "Store a 50 TB file without losing a byte by chopping it into replicated 128 MB blocks, then find the 10 nearest restaurants, or the nearest moving cab, with a quadtree that adapts to how crowded the map is.",
   concepts: ["hdfs","object-storage","quadtree","geo-index"],
   related: ["uber"],
@@ -17,7 +16,7 @@ BP.LESSONS.push({
     ] },
     { h: "Where does a 50 TB file go?", blocks: [
       ["p","Start with something you already know. When you post a photo on a social network, the database doesn’t store the photo. It stores <b>metadata</b>: user_id, post_id, timestamp and a media URL. The photo itself goes to a <b>blob store</b> (blob = “binary large object”, a fancy word for a file), which hands back that URL."],
-      ["p","That works for a 3 MB photo. Now the blob is a 50 TB video archive, or a log file that grows forever as servers keep writing to it. The requirements from the notes:"],
+      ["p","That works for a 3 MB photo. Now the blob is a 50 TB video archive, or a log file that grows forever as servers keep writing to it. The requirements:"],
       ["list",["<b>Store large files</b>, far bigger than any one machine’s disk.","<b>Reliable and durable:</b> no data loss, ever, even as disks fail.","<b>Downloads:</b> people need to read the files back.","<b>Analytics:</b> jobs need to crunch through the data, ideally in parallel."]],
       ["p","The core idea is the one you’d come up with yourself: <b>split the file into chunks and spread them across many machines</b>. Ten machines with 10 TB disks can hold a file none of them could hold alone. The interesting question is how big each chunk should be."]
     ] },
@@ -37,7 +36,7 @@ BP.LESSONS.push({
       ["img","Seagate ST33232A hard disk inner view.jpg","HDFS runs on many cheap commodity disks like this, so it assumes disks will fail and replicates every block three times."]
     ] },
     { h: "Uploading and downloading, step by step", blocks: [
-      ["p","Follow a 200 MB log file on its way in. In the notes, the client streams data to an app server, which runs the HDFS client library."],
+      ["p","Follow a 200 MB log file on its way in. The client streams data to an app server, which runs the HDFS client library."],
       ["steps",[["Ask the chunk size","The app server asks the NameNode: how big are blocks here? 128 MB."],["Buffer","It buffers the incoming stream until it has 128 MB, or the file ends."],["Ask where","It asks the NameNode where to put this block. The NameNode records the metadata, for example “F1, chunk 1 → D3”, and names the DataNodes for the copies."],["Write and replicate","It writes the block to that DataNode, which passes the bytes along a pipeline to the replica DataNodes."],["Repeat","Back to buffering until the file is done. Our 200 MB file becomes two blocks: <b>128 MB + 72 MB</b>. The last block only holds what’s left."]]],
       ["p","Upload latency isn’t amazing, because it’s one stream of data written block after block. That’s fine; HDFS is built for big, throughput-heavy jobs, not for snappy little writes."],
       ["p","Reading is the reverse. The app server asks the NameNode for the file’s block list and the DataNodes holding each block, fetches the blocks in order, and streams each one to the client as soon as it arrives, so the client doesn’t wait for the whole file."],
@@ -62,7 +61,7 @@ BP.LESSONS.push({
       ["p","Next idea: chop the world into a <b>fixed grid</b> of 1 km × 1 km cells. Give every place a grid_id. Now “nearby” means “my cell plus the 8 around it”:"],
       ["code","SELECT * FROM places WHERE grid_id IN (mine, n1, n2, ..., n8);"],
       ["p","That’s an exact-match query on one column, which databases love. So what’s wrong? <b>Density.</b> A 1 km² cell in the middle of an ocean holds nothing, and you’d search outwards for ages. The same cell in a busy city centre might hold 2,000 restaurants, way more than you need. No single cell size works for both."],
-      ["p","The notes’ key insight: <b>size a cell by how many points it holds, not by how much area it covers.</b> Aim for about <b>100 points per cell</b>. Over the ocean a cell can be the size of a country; downtown it can be the size of a block. And because restaurants open and close, the cells need to adapt as the data changes."]
+      ["p","The key insight: <b>size a cell by how many points it holds, not by how much area it covers.</b> Aim for about <b>100 points per cell</b>. Over the ocean a cell can be the size of a country; downtown it can be the size of a block. And because restaurants open and close, the cells need to adapt as the data changes."]
     ] },
     { h: "The quadtree: split when crowded", blocks: [
       ["p","A <b>quadtree</b> is a tree where every node is a rectangle on the map, and every node that has children has exactly four (hence “quad”). It turns the “cells sized by count” idea into an algorithm:"],
@@ -74,27 +73,27 @@ BP.LESSONS.push({
     { h: "Finding your cell, and your neighbours", blocks: [
       ["p","Given the user’s (x, y), which leaf are they in? At each node, compute the midpoints, compare, and go down into the matching quadrant:"],
       ["code","findGrid(x, y, node):\n  if node.isLeaf: return node.gridId\n  xMid = (node.x1 + node.x2) / 2;  yMid = (node.y1 + node.y2) / 2\n  if x <  xMid and y >= yMid: return findGrid(x, y, node.NW)\n  if x >= xMid and y >= yMid: return findGrid(x, y, node.NE)\n  if x <  xMid and y <  yMid: return findGrid(x, y, node.SW)\n  return findGrid(x, y, node.SE)                       // O(log N)"],
-      ["p","Two comparisons per level and about log N levels, so it’s <b>O(log N)</b>. In the notes, each place’s grid_id is also stored in MySQL, so once you know the user’s cell you can fetch its places directly."],
+      ["p","Two comparisons per level and about log N levels, so it’s <b>O(log N)</b>. Each place’s grid_id is also stored in MySQL, so once you know the user’s cell you can fetch its places directly."],
       ["list",["<b>Find my cell:</b> at each node compare x with x_mid and y with y_mid → O(log N).","<b>Neighbours:</b> follow sibling pointers, or probe just outside the cell boundary in 8 directions.","<b>Insert:</b> find the leaf; if it would exceed the limit, split it (and update ~100 places' grid ids).","<b>Delete:</b> merge four children back when together they drop below the limit."]],
       ["p","The neighbour trick is cute. If your cell doesn’t have 10 restaurants, or the user is near its edge, you need adjacent cells. One option is to keep pointers between neighbouring leaves. The other: take points just outside your cell, say x + 0.1 past the right edge, in all <b>8 directions</b>, and run <code>findGrid</code> on each one. Eight lookups at log N each is still tiny."],
       ["p","Inserts are rare and cheap: find the leaf, add the place, and split if it goes over 100, which means re-assigning about 100 places’ grid ids in MySQL. Deletes, rarer still, merge four children back into their parent when together they drop below the limit."]
     ] },
     { h: "Does the whole tree fit in RAM?", blocks: [
-      ["p","A quadtree is fast because you can walk it in memory. So how much memory does one for 100 million places need? Let’s follow the notes’ estimate."],
+      ["p","A quadtree is fast because you can walk it in memory. So how much memory does one for 100 million places need? Let’s estimate."],
       ["p","If every leaf held one place, the node count would be 10⁸ + 10⁸/4 + 10⁸/16 + … , a geometric series that adds up to 10⁸ × 4/3 ≈ 1.33 × 10⁸. With about 20 places per leaf on average, divide by 20."],
       ["math",[["Places","given","100 M"],["Nodes if ~20 places per leaf","(10⁸ × 4/3) ÷ 20","≈ 6.5 M"],["Bytes per node","4 coords + 4 child pointers","≈ 80 B"],["Tree size","6.5 M × 80 B","≈ 520 MB"],["Points (lat, lng)","10⁸ × 32 B","3.2 GB"],["Total","","≈ 4 GB: fits in one machine's RAM"]],"Small enough to hold in memory and replicate for availability."],
-      ["p","The 80 bytes per node come from the boundary (two corners, four coordinates at 16 bytes each in the notes’ assumption, so 64 B) plus four child pointers at 4 B each. The notes write the tree size as “520 × 10⁸”; that’s a typo for 520 × 10⁶ bytes, about 520 MB."],
+      ["p","The 80 bytes per node come from the boundary (two corners, four coordinates at an assumed 16 bytes each, so 64 B) plus four child pointers at 4 B each. The tree size works out to 520 × 10⁶ bytes, about 520 MB."],
       ["chart",{"type":"donut","title":"RAM for a quadtree of 100M places","data":[["Tree nodes",0.52],["Coordinates",3.2]],"center":"≈ 4 GB","centerSub":"fits on one box","fmt":"num","unit":"GB"}],
       ["p","Around 4 GB, when production machines commonly have 64 GB. The whole index of the world’s restaurants fits comfortably on one server. You then run several copies of it on several servers, not because it’s too big, but for availability and to share the query load."]
     ] },
     { h: "Uber: now the points move", blocks: [
-      ["p","The notes end the quadtree lesson with a teaser: what if the points move? Welcome to Uber. A rider in Bandra opens the app and wants the nearest <b>available</b> cab. The scope from the notes: intra-city rides only; a cab is either available or not, and only available cabs are matched."],
+      ["p","The quadtree story ends with a teaser: what if the points move? Welcome to Uber. A rider in Bandra opens the app and wants the nearest <b>available</b> cab. The scope: intra-city rides only; a cab is either available or not, and only available cabs are matched."],
       ["p","<b>Shard by city.</b> There are about 10 million cabs worldwide, but a rider in Mumbai only cares about Mumbai’s. Cities are independent, so each city (or wider hub) gets its own shard and its own quadtree. Even the busiest Indian cities have around <b>50,000</b> cabs. A problem of 10 million moving points becomes many separate problems of a few thousand to a few hundred thousand."],
       ["p","<b>Use a density-based grid, not a uniform one.</b> Cab density changes with <i>place</i> (city centre vs suburbs) and with <i>time</i> (office hours vs 3 a.m.). In a dense area you don’t want to offer a cab 5 km away; in a sparse one that’s fine. So each city builds a quadtree from the cabs’ current positions."],
       ["p","<b>Track locations.</b> Each cab pings its location about every <b>60 seconds</b>, and the backend keeps a last-known-location map, <code>cab_id → (x, y)</code>, in something fast like <b>Redis</b>. Within one city you could even brute-force the distances, since it’s only thousands of cabs. The quadtree is what keeps it quick at the busiest times."]
     ] },
     { h: "Taming the location pings", blocks: [
-      ["p","Here is the trap. If every ping moves the cab in the quadtree (remove it from its old leaf, insert it into the new one, maybe split or merge cells), the tree becomes a write-hotspot. Say 50,000 cabs ping once a minute: that’s roughly 830 tree updates a second for one city, and pings get more frequent during a trip. Most of those updates are pointless, because the cab is still in the same cell. The notes stack up four fixes:"],
+      ["p","Here is the trap. If every ping moves the cab in the quadtree (remove it from its old leaf, insert it into the new one, maybe split or merge cells), the tree becomes a write-hotspot. Say 50,000 cabs ping once a minute: that’s roughly 830 tree updates a second for one city, and pings get more frequent during a trip. Most of those updates are pointless, because the cab is still in the same cell. Four fixes stack up:"],
       ["steps",[["Don’t ping when nothing changed","The driver app only sends an update if its location actually changed in the last minute. A parked cab stays quiet."],["Let the app know its own cell","The app is told the bounding box of its current leaf, corners (a, b) and (c, d). Each time it moves it checks <code>a ≤ x ≤ c && d ≤ y ≤ b</code>. Only when it <b>crosses into a new cell</b> does the backend update cab → grid, deleting it from the old leaf and inserting it into the new one."],["Use a range, not a single threshold","If cells split above 50 cabs and merge below 50, a cell hovering around 50 would split and merge over and over as cabs drift in and out. Use a <b>range</b> instead, for example 50–75: split only above the top, merge only below the bottom. Engineers call this <b>hysteresis</b>, the same trick your home thermostat uses so it doesn’t click on and off every second."],["Or rebalance on a schedule","Traffic patterns shift slowly, so another option is a job every ~3 hours (or longer) that splits and merges leaves in one go."]]],
       ["p","Then matching. When a rider requests a trip, the backend finds their leaf and the nearby ones, picks the closest available cabs, and offers the ride to the drivers <b>round-robin</b>: one at a time, each accepting or rejecting, until someone says yes."],
       ["tip","Uber's production system uses <b>H3</b> hexagons instead of quadtrees. Explore it in the <a href=\"#/case/uber\">Uber case study</a>."],

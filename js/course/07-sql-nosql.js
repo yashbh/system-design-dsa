@@ -5,7 +5,6 @@ BP.LESSONS.push({
   icon: "🧮",
   minutes: 22,
   title: "SQL vs NoSQL, ACID, and choosing a sharding key",
-  scaler: "HLD 7 · SQL vs NoSQL + Sharding",
   summary: "What a relational database quietly does for you, why sharding takes most of it away, how to pick a sharding key (five worked puzzles), and which kind of NoSQL store fits which job.",
   concepts: ["acid","sharding","nosql-types","denormalization"],
   related: ["uber","ticketmaster","discord"],
@@ -14,7 +13,7 @@ BP.LESSONS.push({
       ["p","Say you're building an online store. You do what almost everyone does: spin up one MySQL server, create a few tables (<code>users</code>, <code>products</code>, <code>orders</code>), and start writing code. It works. It keeps working for a surprisingly long time."],
       ["p","That's not luck. A relational (SQL) database does a lot of hard work for you without being asked. It stops your data from contradicting itself. It makes sure two customers buying the last item at the same moment don't both get it. It survives a power cut without losing confirmed orders. You only notice how much it was doing when you lose it."],
       ["p","And you do lose it, the day your data no longer fits on one machine. This lesson follows that journey: what SQL gives you, why it struggles at very large scale, how to split data across machines without making every query slow, and what the different kinds of <b>NoSQL</b> databases (“not only SQL” stores that drop some relational features to scale more easily) are actually good at."],
-      ["p","The headline advice from the notes comes first, so you don't forget it: <b>start with SQL</b>. Most companies never outgrow it. Scaler itself runs on MySQL. NoSQL is what you reach for when scale forces your hand, not a default."]
+      ["p","The headline advice comes first, so you don't forget it: <b>start with SQL</b>. Most companies never outgrow it. Plenty of large online platforms run happily on MySQL. NoSQL is what you reach for when scale forces your hand, not a default."]
     ] },
     { h: "Gift 1: every fact lives in one place", blocks: [
       ["p","The first thing SQL design teaches is <b>normalization</b>: store each fact exactly once, and have everything else point to it."],
@@ -48,9 +47,9 @@ BP.LESSONS.push({
       ["p","So far SQL sounds perfect. Two things go wrong as you grow."],
       ["p","<b>Problem 1: the schema doesn't fit everything.</b> Back to your store. A t-shirt has a collar type, size, colour and neck style. A MacBook Air has RAM, disk size, disk type and screen size. A book has an author and page count. With around <b>100,000 product types</b>, what does the <code>products</code> table look like?"],
       ["list",["One table per product type? SQL handles millions of rows per table happily, but not 100,000 tables.","One table with every possible column? Each row would be almost entirely NULL.","Stuff all the attributes into one text column? Now you can't efficiently filter for “laptops with 16 GB RAM”."]],
-      ["p","<b>Problem 2: sharding takes away SQL's superpowers.</b> When the data no longer fits on one machine, you split it across many (sharding). Joins across machines are slow and complicated. Transactions across machines are slower and harder still. The notes put it bluntly: SQL has almost no power left after sharding. Once you shard, you want each query's data on one machine anyway, so the relational features buy you much less."],
+      ["p","<b>Problem 2: sharding takes away SQL's superpowers.</b> When the data no longer fits on one machine, you split it across many (sharding). Joins across machines are slow and complicated. Transactions across machines are slower and harder still. Put bluntly: SQL has almost no power left after sharding. Once you shard, you want each query's data on one machine anyway, so the relational features buy you much less."],
       ["img","Datacenter Server Racks (22370909788).jpg","Once one table spans many machines like these, JOINs and transactions across them become slow and fragile."],
-      ["tip","The notes' advice: <b>start with SQL</b>. It's enough for most companies (Scaler runs on MySQL). Reach for NoSQL when scale forces you to. Facebook famously runs heavily, manually sharded MySQL for its user data, so even at huge scale “SQL vs NoSQL” is a choice, not a law."]
+      ["tip","The usual advice: <b>start with SQL</b>. It's enough for most companies (plenty of large platforms run on MySQL). Reach for NoSQL when scale forces you to. Facebook famously runs heavily, manually sharded MySQL for its user data, so even at huge scale “SQL vs NoSQL” is a choice, not a law."]
     ] },
     { h: "Step 1 of sharding: pick the key", blocks: [
       ["p","Whether you shard MySQL by hand or use a NoSQL store that shards for you, step one is the same: choose a <b>sharding key</b>. That's the field that decides which machine owns each row. Shard by <code>user_id</code>, and everything with the same <code>user_id</code> lands on the same machine."],
@@ -59,7 +58,7 @@ BP.LESSONS.push({
       ["p","The word to watch is <b>fan-out</b>. When the key doesn't keep together the data a query needs, the query has to ask every shard and merge the results. That's slow (you wait for the slowest shard), expensive (one request becomes many) and fragile (any one shard being down breaks it)."],
       ["p","Take the bookmarking site from earlier lessons with 16 shards. The most common operation is “show me all my bookmarks”."],
       ["chart",{"type":"bar","title":"Shards touched by getAllBookmarks(user), 16 shards","data":[["Shard by user_id",1],["Shard by site_url",16]],"highlight":0,"note":"One key choice turns a single lookup into a 16-way fan-out."}],
-      ["p","Same data, same query, 16× the work, just from choosing the wrong key. Now try it yourself on the five scenarios from the notes."],
+      ["p","Same data, same query, 16× the work, just from choosing the wrong key. Now try it yourself on these five scenarios."],
       ["fig","shardkey","Pick a scenario, then try each candidate key. Watch for a red, overloaded shard and for queries that suddenly touch every shard."]
     ] },
     { h: "Puzzles 1 and 2: a bank and Uber", blocks: [
@@ -85,13 +84,13 @@ BP.LESSONS.push({
       ["analogy","Normalization is keeping one master copy of the family phone list on the fridge. Denormalization is giving everyone their own printed copy. Looking up a number is faster, but when someone changes their number you have to update every copy, and someone always has an old one."]
     ] },
     { h: "Four shapes of NoSQL", blocks: [
-      ["p","NoSQL isn't one thing. It's a family of databases, each shaped around a particular way of reading data. The notes cover three; graph databases are a fourth worth knowing."],
-      ["list",["<b>Key-value</b> (Redis, DynamoDB): a giant distributed hashmap. Give it a key, get back a value. It doesn't care what the value contains. Blazing fast and simple.","<b>Document</b> (MongoDB, Elasticsearch): each record is a JSON-like document, and different documents can have different fields. You can search by any field. JavaScript developers often find these natural, because records look exactly like the objects in their code.","<b>Wide-column</b> or column-family (Cassandra, HBase): the sharding key is the row id. Inside each row are column families, each holding entries sorted by timestamp, newest first. Perfect for “the latest N things” and paging through them.","<b>Graph</b> (Neo4j, Amazon Neptune): nodes and edges. Built for questions like “friends of friends who like hiking” that would be a painful chain of JOINs in SQL. (Not in the notes; added for completeness.)"]],
+      ["p","NoSQL isn't one thing. It's a family of databases, each shaped around a particular way of reading data. Three families come up most often; graph databases are a fourth worth knowing."],
+      ["list",["<b>Key-value</b> (Redis, DynamoDB): a giant distributed hashmap. Give it a key, get back a value. It doesn't care what the value contains. Blazing fast and simple.","<b>Document</b> (MongoDB, Elasticsearch): each record is a JSON-like document, and different documents can have different fields. You can search by any field. JavaScript developers often find these natural, because records look exactly like the objects in their code.","<b>Wide-column</b> or column-family (Cassandra, HBase): the sharding key is the row id. Inside each row are column families, each holding entries sorted by timestamp, newest first. Perfect for “the latest N things” and paging through them.","<b>Graph</b> (Neo4j, Amazon Neptune): nodes and edges. Built for questions like “friends of friends who like hiking” that would be a painful chain of JOINs in SQL."]],
       ["fig","datamodels","Click through the models. It's the same user and their orders each time. Notice how the shape of the data changes what's cheap to ask."],
       ["p","Remember the 100,000 product types? A document store is the natural fit: each product is a document with whatever attributes it needs, and you can still filter on any of them. It gives you some tabular structure without forcing every product into the same columns."]
     ] },
     { h: "Pick the store: three quick cases", blocks: [
-      ["p","The notes include a short quiz on matching problems to stores. Here's the reasoning for each."],
+      ["p","Here's a short quiz on matching problems to stores, with the reasoning for each."],
       ["p","<b>Live cricket score per match.</b> One key (the match), one value (the score), read constantly, overwritten every ball. Key-value. Nothing else is lighter."],
       ["p","<b>A cab's current location.</b> If you only ever need where the cab is <i>now</i>, key-value again: overwrite <code>cab → (lat, lng)</code> every few seconds. But if you need the location <i>history</i>, switch to wide-column: the cab is the row, each location is a timestamped entry, and “the last 10 positions” is a quick read of the newest entries."],
       ["p","<b>Latest tweets for a hashtag, 10 at a time.</b> Key-value looks tempting (key = hashtag), but the value is the entire list. To show 10 tweets you'd fetch all 10,000 and throw away 9,990. Slow and wasteful. Wide-column fits: the hashtag is the row, with column families like <i>Tweets</i> and <i>Popular tweets</i>. Read the first 10 entries, then use an offset for the next 10."],
@@ -99,9 +98,9 @@ BP.LESSONS.push({
       ["extra","<b>ACID vs BASE.</b> NoSQL stores often favour <b>B</b>asically <b>A</b>vailable, <b>S</b>oft state, <b>E</b>ventually consistent behaviour. You can still build ACID-like guarantees on NoSQL, for example routing writes through a lock-holding coordinator, at a cost."]
     ] },
     { h: "ACID on NoSQL, and two open problems", blocks: [
-      ["p","NoSQL stores rarely give multi-key ACID transactions out of the box. Can you get them back if you really need them? The notes' approach: route all writes for a dataset through a <b>central shard</b> that hands out <b>write locks</b>. Acquire the lock, write, release. That gives atomicity and isolation, at the cost of a bottleneck: every write now queues at one machine."],
+      ["p","NoSQL stores rarely give multi-key ACID transactions out of the box. Can you get them back if you really need them? One approach: route all writes for a dataset through a <b>central shard</b> that hands out <b>write locks</b>. Acquire the lock, write, release. That gives atomicity and isolation, at the cost of a bottleneck: every write now queues at one machine."],
       ["p","Notice the pattern. Every guarantee has a price, and in a distributed system the price is usually paid in latency, availability or a central bottleneck. You choose which one hurts least for your use case."],
-      ["p","The lecture ends with two homework problems that lead into the next two lessons:"],
+      ["p","Two open problems lead into the next two lessons:"],
       ["list",["<b>Variable-size values:</b> SQL is easy to store because the maximum record size is known. NoSQL values can grow without limit. How do you lay them out on disk so reads are fast and updates are cheap? → <a href=\"#/lesson/lsm\">NoSQL internals</a>.","<b>Manual sharding:</b> design the black box that adds shards and restores the replication level when machines die. → <a href=\"#/lesson/shard-ops\">Orchestration & shard creation</a>."]],
       ["p","<b>Common mistakes to avoid:</b>"],
       ["list",["<b>Choosing NoSQL for a small app</b> “because it scales”, and giving up transactions and joins you needed.","<b>Picking a key by gut feel.</b> Write down the top three operations first, then check how many shards each touches.","<b>Sharding by date or by any value everyone hits at once.</b> One shard takes the whole spike.","<b>Low-cardinality keys</b> (first letter, country) that cap how many shards you can ever have.","<b>Mixing up the two Cs.</b> CAP consistency doesn't give you ACID transactions."]]

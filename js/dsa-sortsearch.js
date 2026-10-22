@@ -1,4 +1,4 @@
-/* Blueprint — DSA: sorting, binary search, math. Content from the user's notes (sorting1-2, bs1-3, Math1-3, AdvancedMath) plus LeetCode practice. */
+/* Blueprint — DSA: sorting, binary search, math. Lessons plus LeetCode practice. */
 (function () {
   const T = BP.DSA.topics;
   const A = BP.ALGOS;
@@ -62,7 +62,7 @@
     } };
 
   A.ss_inversionCount = { title: "Inversion count during merge sort", inputLabel: "array", input: "10 3 8 15 6",
-    presets: [["Notes: 10 3 8 15 6", "10 3 8 15 6"], ["5 3 1 4 2", "5 3 1 4 2"], ["Already sorted", "1 2 3 4 5"]],
+    presets: [["Example: 10 3 8 15 6", "10 3 8 15 6"], ["5 3 1 4 2", "5 3 1 4 2"], ["Already sorted", "1 2 3 4 5"]],
     about: "Merge sort that also counts inversions. The box marks the range being merged (left half orange, right half blue); red cells are the left elements that form an inversion with the taken right element, all counted in one step.",
     code: ["def count(A, lo, hi):", "    if lo >= hi:", "        return 0", "    mid = (lo + hi) // 2", "    c = count(A, lo, mid) + count(A, mid + 1, hi)", "    i, j, temp = lo, mid + 1, []", "    while i <= mid and j <= hi:", "        if A[i] <= A[j]:", "            temp.append(A[i])      # no inversion", "            i += 1", "        else:", "            c += mid - i + 1       # all of A[i..mid] > A[j]", "            temp.append(A[j])", "            j += 1", "    A[lo:hi + 1] = temp + A[i:mid + 1] + A[j:hi + 1]", "    return c"],
     gen(s) {
@@ -92,7 +92,7 @@
       return fr;
     } };
 
-  A.ss_partition = { title: "Partition around the first element (notes' version)", inputLabel: "array (pivot = first)", input: "54 26 93 17 77 31 44 55 20",
+  A.ss_partition = { title: "Partition around the first element", inputLabel: "array (pivot = first)", input: "54 26 93 17 77 31 44 55 20",
     about: "In-place partition with the first element as pivot (blue). i scans from the left, j from the right; green cells are known ≤ pivot, faded cells known &gt; pivot. At the end the pivot is swapped into its final sorted index.",
     code: ["pivot = A[lo]", "i = lo + 1", "j = hi", "while i <= j:", "    if A[i] <= pivot:", "        i += 1                 # already on the left side", "    else:", "        A[i], A[j] = A[j], A[i]", "        j -= 1                 # A[j] is now known > pivot", "A[lo], A[j] = A[j], A[lo]      # pivot to its final index", "return j"],
     gen(s) {
@@ -138,7 +138,7 @@
     } };
 
   A.ss_aggressiveCows = { title: "Binary search on the answer: aggressive cows", inputLabel: "sorted stalls | cows M", input: "1 2 4 8 9 | 3",
-    presets: [["Notes: 1 2 4 8 9, M=3", "1 2 4 8 9 | 3"], ["Notes: 9 stalls, M=4", "2 6 11 14 19 25 30 39 43 | 4"]],
+    presets: [["Example: 1 2 4 8 9, M=3", "1 2 4 8 9 | 3"], ["9 stalls, M=4", "2 6 11 14 19 25 30 39 43 | 4"]],
     about: "Binary search on the answer. The top row lists every candidate gap D (green = feasible, red = not); the stalls row shows the greedy check for the current D, with chosen stalls in green.",
     code: ["l = 1", "r = A[-1] - A[0]", "ans = 0", "while l <= r:", "    mid = (l + r) // 2", "    # canPlace: cow at A[0], then each next stall with gap >= mid", "    if canPlace(A, M, mid):", "        ans = mid              # feasible: try a bigger gap", "        l = mid + 1", "    else:", "        r = mid - 1            # too greedy: try a smaller gap", "return ans"],
     gen(s) {
@@ -214,13 +214,12 @@
   /* ═════════ SORTING ═════════ */
   T["sorting"] = {
     name: "Sorting", icon: "🔢", color: "#7c3aed", minutes: 60,
-    notes: "sorting1.pdf, sorting2.pdf",
     summary: "Put items in order by any rule you choose, and use the ordering (or the merge and partition steps themselves) to solve harder problems.",
     sections: [
       { h: "What sorting really is", blocks: [
         ["p", "Sorting arranges elements in increasing or decreasing order of some <b>parameter</b>. The parameter does not have to be the value. You can sort numbers by how many factors they have, points by distance, or strings by how they concatenate."],
         ["analogy", "A teacher sorting exam papers by marks. Many papers can have the same mark. If she keeps papers with equal marks in the order they were handed in, her sort is <b>stable</b>. If she sorts the pile on the desk without a second desk, it is <b>in-place</b>."],
-        ["p", "Example from the notes: sort <code>[7, 2, 9, 15, 32]</code> by number of factors. Counts are 7→2, 2→2, 9→3, 15→4, 32→6, so the order is 7, 2, 9, 15, 32."],
+        ["p", "Example: sort <code>[7, 2, 9, 15, 32]</code> by number of factors. Counts are 7→2, 2→2, 9→3, 15→4, 32→6, so the order is 7, 2, 9, 15, 32."],
         ["p", "<b>The three O(N²) sorts</b> are worth knowing for interviews even though you rarely use them:"],
         ["table", ["Sort", "Idea", "Best / worst", "Stable?", "In-place?"], [
           ["Selection", "Find the minimum of the unsorted part, swap it to the front.", "O(N²) / O(N²)", "No", "Yes"],
@@ -317,7 +316,7 @@
       ] },
       { h: "Partition and quick sort", blocks: [
         ["p", "Pick a <b>pivot</b>. Move everything ≤ pivot to its left and everything &gt; pivot to its right. The pivot is now exactly where it will be in the sorted array. Recurse on the two sides. That is quick sort."],
-        ["viz", "ss_partition", "The notes' partition: pivot = first element, i scans from the left, j from the right. Trace on the notes' array ends with 54 at index 5."],
+        ["viz", "ss_partition", "This partition: pivot = first element, i scans from the left, j from the right. Trace on the example array ends with 54 at index 5."],
         ["probs", [
           { t: "Partition the array around a pivot", d: "Medium",
             q: "Take A[lo] as pivot. Rearrange so elements ≤ pivot are on its left and &gt; pivot on its right. Return the pivot's final index.",
@@ -399,7 +398,7 @@
             edge: "All zeros: return \"0\", not \"000\".",
             lc: "largest-number" }
         ]],
-        ["p", "<b>Stability example from the notes.</b> Sort by marks: (Vinit 92), (Ritika 94), (Risabh 75), (Jilender 34), (Rajeev 94). A stable sort gives Jilender 34, Risabh 75, Vinit 92, <b>Ritika 94, Rajeev 94</b>. Ritika stays before Rajeev because she came first. This matters when you sort by one key and then by another."]
+        ["p", "<b>Stability example.</b> Sort by marks: (Vinit 92), (Ritika 94), (Risabh 75), (Jilender 34), (Rajeev 94). A stable sort gives Jilender 34, Risabh 75, Vinit 92, <b>Ritika 94, Rajeev 94</b>. Ritika stays before Rajeev because she came first. This matters when you sort by one key and then by another."]
       ] },
       { h: "Interview cheatsheet", blocks: [
         ["table", ["Algorithm", "Time (best / avg / worst)", "Extra space", "Stable", "In-place", "Use when"], [
@@ -448,7 +447,6 @@
   /* ═════════ BINARY SEARCH ═════════ */
   T["binary-search"] = {
     name: "Binary search", icon: "🎯", color: "#0e7490", minutes: 70,
-    notes: "bs1.pdf, bs2.pdf, bs3.pdf",
     summary: "Halve the search space each step by asking a question whose answer tells you which half to throw away; it works on sorted arrays, unsorted shapes and answer ranges.",
     sections: [
       { h: "The idea: throw away half", blocks: [
@@ -657,7 +655,7 @@
             ] }
         ]],
         ["viz", "ss_aggressiveCows", "The answer row fills green (feasible) and red (infeasible). Exactly one boundary: that is why binary search works."],
-        ["tip", "Related practice named in the notes: Allocate Books (same as painters), Ath Magical Number. On LeetCode: Koko Eating Bananas, Capacity to Ship Packages, Split Array Largest Sum."]
+        ["tip", "Related practice: Allocate Books (same as painters), Ath Magical Number. On LeetCode: Koko Eating Bananas, Capacity to Ship Packages, Split Array Largest Sum."]
       ] },
       { h: "Median of two sorted arrays", blocks: [
         ["p", "The hardest classic binary search. The search space is <b>how many elements you take from the smaller array</b> into the left half of the merged result."],
@@ -684,7 +682,7 @@
           ["c1 = 2", "c2 = 3: l1 = A[1] = 12, r2 = B[3] = 4. l1 &gt; r2: too many from A, go left."],
           ["c1 = 0", "c2 = 5: l2 = B[4] = 9 &gt; r1 = 7: too few from A, go right."],
           ["c1 = 1", "c2 = 4: l1 = 7, r1 = 12, l2 = 4, r2 = 9. Valid. Median = (max(7,4) + min(12,9)) / 2 = 8."]]],
-        ["warn", "If you binary search the larger array, c2 = x − c1 can go negative or past M (notes: N = 100, M = 5). Always swap so A is the smaller one."]
+        ["warn", "If you binary search the larger array, c2 = x − c1 can go negative or past M (e.g. N = 100, M = 5). Always swap so A is the smaller one."]
       ] },
       { h: "Patterns & pitfalls", blocks: [
         ["table", ["Goal", "On A[mid] (or check(mid)) true", "Else", "Answer"], [
@@ -736,7 +734,6 @@
   /* ═════════ MATH ═════════ */
   T["math"] = {
     name: "Math for DSA", icon: "➗", color: "#b45309", minutes: 75,
-    notes: "Math1.pdf, Math2.pdf, Math3.pdf, AdvancedMath.pdf",
     summary: "Modular arithmetic, fast power, GCD, counting, primes and modular inverses: the small toolkit behind many \"return the answer mod 1e9+7\" problems.",
     sections: [
       { h: "Modular arithmetic", blocks: [
@@ -746,7 +743,7 @@
           ["Multiply", "(a · b) % m = (a%m · b%m) % m", "(9·8)%5 = (4·3)%5 = 2"],
           ["Subtract", "(a − b) % m = (a%m − b%m + m) % m", "a=10,b=2,m=9: (1−2+9)%9 = 8"],
           ["Power", "a^b % m = (a%m)^b % m", "37^103 % 12 = 1^103 = 1"],
-          ["Divide", "NOT (a%m / b%m)", "use the modular inverse"]], "Quiz from the notes: (37^103 − 1) % 12. Since 37 % 12 = 1, 37^103 % 12 = 1, so the answer is (1 − 1 + 12) % 12 = 0."],
+          ["Divide", "NOT (a%m / b%m)", "use the modular inverse"]], "Quick quiz: (37^103 − 1) % 12. Since 37 % 12 = 1, 37^103 % 12 = 1, so the answer is (1 − 1 + 12) % 12 = 0."],
         ["probs", [
           { t: "Sum of array mod 1e9+7", d: "Easy",
             q: "N ≤ 1e5, values up to 1e18. Return the sum mod 1e9+7.",
@@ -770,7 +767,7 @@
                 idea: "Only remainders matter. Remainder r pairs with <b>m − r</b>. Remainder 0 pairs with itself, and so does m/2 when m is even: choose 2 inside the group, C(f, 2). For the rest, multiply freq[l] · freq[r] with l from 1 and r from m−1 moving inward.",
                 code: "def count_pairs(A, m):\n    freq = [0] * m\n    for x in A:\n        freq[x % m] += 1           # Python's % is never negative\n    ans = freq[0] * (freq[0] - 1) // 2          # 0 pairs with 0\n    if m % 2 == 0:\n        h = m // 2\n        ans += freq[h] * (freq[h] - 1) // 2     # m/2 pairs with m/2\n    l = 1\n    r = m - 1\n    while l < r:\n        ans += freq[l] * freq[r]   # remainder l pairs with m - l\n        l += 1\n        r -= 1\n    return ans" }
             ],
-            edge: "m = 1: every pair counts, C(N, 2). Negative values: normalise ((x % m) + m) % m. Use 64-bit counts. (The handwritten worked example wrote 11 % 6 as 4 and got 17; the correct answer is 16.)",
+            edge: "m = 1: every pair counts, C(N, 2). Negative values: normalise ((x % m) + m) % m. Use 64-bit counts. (In the worked example, 11 % 6 is 5, and the answer is 16.)",
             lc: "check-if-array-pairs-are-divisible-by-k" },
           { t: "Count subarrays with sum divisible by B", d: "Medium",
             q: "Count subarrays whose sum is divisible by B.",
@@ -790,7 +787,7 @@
       { h: "Fast power", blocks: [
         ["p", "Computing a^n by multiplying n times is O(n). For n = 1e9 that is too slow. Use <b>a^n = (a^(n/2))²</b>, times one more a when n is odd. The exponent halves each call, so it takes O(log n) multiplications."],
         ["viz", "ss_fastPow", "Down the chain, the exponent halves. On the way back up, square p and multiply by a at odd steps."],
-        ["warn", "Overflow trap from the notes: <code>(p * p * a) % m</code> overflows even in 64-bit. Write <code>((p * p) % m * (a % m)) % m</code> and store p as 64-bit."],
+        ["warn", "Overflow trap: <code>(p * p * a) % m</code> overflows even in 64-bit. Write <code>((p * p) % m * (a % m)) % m</code> and store p as 64-bit."],
         ["probs", [
           { t: "Fast power a^n % m", d: "Medium",
             q: "Compute a^n mod m for n up to 1e9.",

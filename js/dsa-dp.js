@@ -1,4 +1,4 @@
-/* Blueprint — DSA: dynamic programming and greedy. Content from the user's notes (DP1–DP7, greedy.pdf, Questionset1.pdf) plus LeetCode practice. */
+/* Blueprint — DSA: dynamic programming and greedy. Worked examples plus LeetCode practice. */
 (function () {
   const { nums, clone, cap } = BP.AV;
   const A = BP.ALGOS;
@@ -11,7 +11,7 @@
 
   /* House robber: take vs skip */
   A.dp_houseRobber = { title: "1-D DP: house robber (no two adjacent)", inputLabel: "array", input: "2 -9 3 1 2 -3 8",
-    presets: [["Notes example", "2 -9 3 1 2 -3 8"], ["9 4 13 24", "9 4 13 24"], ["Quiz", "10 20 30 40"]],
+    presets: [["Worked example", "2 -9 3 1 2 -3 8"], ["9 4 13 24", "9 4 13 24"], ["Quiz", "10 20 30 40"]],
     about: "Top row is the array, bottom row is dp[i] = the best sum you can get from a[0..i]. For each index the animation compares <b>skip</b> (dp[i-1]) with <b>take</b> (a[i] + dp[i-2]); the winning neighbour is highlighted green.",
     code: ["dp = [0] * n                  # dp[i] = best sum using a[0..i]", "for i in range(n):", "    skip = dp[i - 1] if i >= 1 else 0           # leave a[i]", "    take = a[i] + (dp[i - 2] if i >= 2 else 0)  # use a[i]; i-1 is banned", "    dp[i] = max(skip, take)", "return dp[n - 1]"],
     gen(s) { const a = need(cap(nums(s), 12), "numbers"), n = a.length, dp = Array(n).fill(null), fr = [];
@@ -46,7 +46,7 @@
 
   /* Edit distance with costs */
   A.dp_editDistance = { title: "2-D DP: edit distance (insert / delete / replace costs)", inputLabel: "s1 | s2 | Ci Cd Cr", input: "horse | ros | 1 1 1",
-    presets: [["LeetCode (all costs 1)", "horse | ros | 1 1 1"], ["Notes: abcd → abc", "abcd | abc | 2 2 3"], ["Notes: abdxy → abcgx", "abdxy | abcgx | 2 2 3"]],
+    presets: [["LeetCode (all costs 1)", "horse | ros | 1 1 1"], ["abcd → abc", "abcd | abc | 2 2 3"], ["abdxy → abcgx", "abdxy | abcgx | 2 2 3"]],
     about: "Cell (i, j) is the cheapest way to turn the first i letters of s1 (rows) into the first j letters of s2 (columns). On a mismatch the three neighbours are compared: left = insert, up = delete, diagonal = replace; the cheapest is green. The last frame walks back to list the edits.",
     code: ["for i in range(n + 1):", "    dp[i][0] = Cd * i                 # delete all of s1[:i]", "for j in range(m + 1):", "    dp[0][j] = Ci * j                 # insert all of s2[:j]", "for i in range(1, n + 1):", "    for j in range(1, m + 1):", "        if s1[i - 1] == s2[j - 1]:", "            dp[i][j] = dp[i - 1][j - 1]          # same letter: free", "        else:", "            dp[i][j] = min(Ci + dp[i][j - 1],    # insert  (left)", "                           Cd + dp[i - 1][j],    # delete  (up)", "                           Cr + dp[i - 1][j - 1])  # replace (diagonal)", "return dp[n][m]"],
     gen(s) { const [x0, y0, c0] = split2(s); const X = cap([...(x0 || "")], 8, "characters"), Y = cap([...(y0 || "")], 8, "characters"), c = nums(c0 || "1 1 1"), Ci = c[0] ?? 1, Cd = c[1] ?? 1, Cr = c[2] ?? 1, n = X.length, m = Y.length, fr = [];
@@ -90,7 +90,7 @@
 
   /* Palindrome table filled by gap */
   A.dp_palGap = { title: "Interval DP: palindromic substrings, filled by gap", inputLabel: "string (≤ 8 chars)", input: "cbcacbbc",
-    presets: [["cbcacbbc", "cbcacbbc"], ["Notes: abac", "abac"], ["aaaa", "aaaa"]],
+    presets: [["cbcacbbc", "cbcacbbc"], ["abac", "abac"], ["aaaa", "aaaa"]],
     about: "Row i, column j answers: is s[i..j] a palindrome (T/F)? Cells below the diagonal are unused. The table fills one diagonal (one substring length) at a time, and each longer cell looks at the cell just inside it, down-left on the diagonal.",
     code: ["dp = [[False] * n for _ in range(n)]", "count = 0", "for gap in range(n):                 # gap = length - 1", "    for i in range(n - gap):", "        j = i + gap", "        if gap == 0:", "            dp[i][j] = True              # one letter", "        elif gap == 1:", "            dp[i][j] = s[i] == s[j]       # two letters", "        else:", "            dp[i][j] = s[i] == s[j] and dp[i + 1][j - 1]   # ends match + inside", "        count += dp[i][j]                # True counts as 1"],
     gen(s) { const ch = cap([...String(s).replace(/\s/g, "")], 8, "characters"), n = need(ch, "characters").length, dp = Array.from({ length: n }, () => Array(n).fill(null)), fr = []; let count = 0, best = "";
@@ -107,7 +107,7 @@
 
   /* Candy: two passes */
   A.dp_candy = { title: "Greedy: candy distribution in two passes", inputLabel: "marks", input: "1 6 3 1 10 12 20 5 2",
-    presets: [["Notes example", "1 6 3 1 10 12 20 5 2"], ["1 5 2 1", "1 5 2 1"], ["All equal", "4 4 4 4 4"]],
+    presets: [["Worked example", "1 6 3 1 10 12 20 5 2"], ["1 5 2 1", "1 5 2 1"], ["All equal", "4 4 4 4 4"]],
     about: "Bars are the marks, the row below is each student's candies. Pass 1 walks left to right enforcing 'more than my left neighbour'; pass 2 walks right to left enforcing 'more than my right neighbour'. The pair being compared is highlighted.",
     code: ["c = [1] * n                          # everyone starts with 1", "for i in range(1, n):                # pass 1: left -> right", "    if a[i] > a[i - 1]:", "        c[i] = c[i - 1] + 1          # beat the left neighbour", "for i in range(n - 2, -1, -1):       # pass 2: right -> left", "    if a[i] > a[i + 1]:", "        c[i] = max(c[i], c[i + 1] + 1)   # beat the right neighbour too", "return sum(c)"],
     gen(s) { const a = need(cap(nums(s), 12), "marks"), n = a.length, c = a.map(() => 1), fr = [];
@@ -121,7 +121,7 @@
 
   /* Stock: at most 2 transactions state machine */
   A.dp_stock2 = { title: "State machine DP: stock with at most 2 transactions", inputLabel: "prices", input: "3 3 5 0 0 3 1 4",
-    presets: [["LeetCode example", "3 3 5 0 0 3 1 4"], ["Notes chart", "3 6 6 2 6 4 9 3 1"], ["Only rising", "1 2 3 4 5"]],
+    presets: [["LeetCode example", "3 3 5 0 0 3 1 4"], ["Price chart", "3 6 6 2 6 4 9 3 1"], ["Only rising", "1 2 3 4 5"]],
     about: "Bars are the daily prices; the arrow is today. The four chips are the best cash you could hold after first buy (b1), first sell (s1), second buy (b2) and second sell (s2). Chips that improve today light up.",
     code: ["b1 = -p[0]                     # best cash after the first buy", "s1 = 0                         # ... after the first sell", "b2 = float('-inf')             # ... after the second buy", "s2 = 0                         # ... after the second sell", "for x in p[1:]:", "    # the right-hand side uses yesterday's values", "    b1, s1, b2, s2 = (max(b1, -x),        # first buy", "                      max(s1, b1 + x),    # first sell", "                      max(b2, s1 - x),    # second buy, paid from first profit", "                      max(s2, b2 + x))    # second sell", "return max(s1, s2)"],
     gen(s) { const p = need(cap(nums(s), 12), "prices"), fr = []; let b1 = -p[0], s1 = 0, b2 = -Infinity, s2 = 0;
@@ -136,7 +136,7 @@
 
   /* Jump game: greedy reach, level by level */
   A.dp_jumpReach = { title: "Greedy: jump game, farthest reach level by level", inputLabel: "max jump at each index", input: "2 3 1 1 4",
-    presets: [["2 3 1 1 4", "2 3 1 1 4"], ["Notes: 3 2 4 1 2 3 1 0 1", "3 2 4 1 2 3 1 0 1"], ["Stuck: 3 2 1 0 4", "3 2 1 0 4"]],
+    presets: [["2 3 1 1 4", "2 3 1 1 4"], ["3 2 4 1 2 3 1 0 1", "3 2 4 1 2 3 1 0 1"], ["Stuck: 3 2 1 0 4", "3 2 1 0 4"]],
     about: "The shaded window is every index reachable with the current number of jumps. Pointer i scans the window while far tracks the farthest index the next jump could reach; when i reaches the window's end, one jump is taken and the window extends to far.",
     code: ["jumps = 0", "end = 0                       # last index of the current window", "far = 0                       # farthest index the next jump can reach", "for i in range(n - 1):", "    far = max(far, i + a[i])", "    if i == end:              # this window is used up", "        if far <= i:", "            return -1         # stuck: the last index is unreachable", "        jumps += 1            # take one more jump", "        end = far             # new window ends at far", "        if end >= n - 1:", "            break", "return jumps"],
     gen(s) { const a = need(cap(nums(s), 12), "numbers"), n = a.length, fr = []; let jumps = 0, end = 0, far = 0, start = 0;
@@ -155,7 +155,6 @@
   /* ═════════════════════════ DYNAMIC PROGRAMMING ═════════════════════════ */
   T["dp"] = {
     name: "Dynamic programming", icon: "🧮", color: "#7a3fc4", minutes: 120,
-    notes: "DP1–DP7, Questionset1.pdf",
     summary: "Recursion that remembers: when the same smaller problem keeps coming back, solve it once, store it, and build the big answer from stored answers.",
     sections: [
       { h: "Recognising DP and the recipe", blocks: [
@@ -174,7 +173,7 @@
           ["Base case", "The smallest states you know directly (dp[0] = 0, ways to pay 0 = 1)."],
           ["Order", "Fill so every state's dependencies are already done: ascending i, row-major, bottom-right to top-left, or by gap."],
           ["Answer + space", "Which cell is the answer (dp[N], max of all dp[i], dp[0][0])? Which old rows can be dropped?"]]],
-        ["tip", "<b>Recipe to memoise any recursion</b> (from the notes): (1) make storage sized by the changing parameters, filled with -1; (2) store the answer before returning; (3) at the top, if the answer is already stored, return it."],
+        ["tip", "<b>Recipe to memoise any recursion</b>: (1) make storage sized by the changing parameters, filled with -1; (2) store the answer before returning; (3) at the top, if the answer is already stored, return it."],
         ["probs", [
           { t: "Nth Fibonacci", d: "Easy", q: "Return the Nth term of 0, 1, 1, 2, 3, 5, 8, … (0-indexed).", ex: "N = 10 → 55\nN = 5 → 5   (table: 0 1 1 2 3 5)",
             ap: [
@@ -182,7 +181,7 @@
                 idea: "Write the definition directly: fib(N) = fib(N-1) + fib(N-2). Every call makes two more calls, so the tree doubles each level and <b>fib(3), fib(2), … are recomputed again and again</b>.",
                 code: "def fib(n):\n    if n <= 1:\n        return n\n    return fib(n - 1) + fib(n - 2)" },
               { n: "Better", cx: "O(N) time · O(N) space",
-                idea: "Memoize (top-down): store each answer the first time it is computed. The tree collapses to one left spine; <b>every right child becomes an O(1) lookup</b>. Recipe from the notes: storage filled with -1, store before returning, check at the top.",
+                idea: "Memoize (top-down): store each answer the first time it is computed. The tree collapses to one left spine; <b>every right child becomes an O(1) lookup</b>. Recipe: storage filled with -1, store before returning, check at the top.",
                 code: "def fib(n):\n    memo = [-1] * (n + 1)\n\n    def go(i):\n        if i <= 1:\n            return i\n        if memo[i] != -1:          # already solved\n            return memo[i]\n        memo[i] = go(i - 1) + go(i - 2)\n        return memo[i]\n\n    return go(n)" },
               { n: "Optimal", cx: "O(N) time · O(N) space",
                 idea: "Tabulate (bottom-up): start from the base cases and fill dp[2..N] in increasing order. No recursion, so <b>no stack overflow</b> for large N.",
@@ -361,7 +360,7 @@
           ["0/1 (each item once)", "No", "W down to w", "dp[i][j] or 1-D dp[j]"],
           ["Unbounded (reuse items)", "No", "w up to W", "dp[c]"],
           ["Huge W, small values", "No", "value S down to v", "dp[value] = min weight"]]],
-        ["tip", "Fractional knapsack is solved greedily (sort by ratio, cut the last item). Its proof and code live in the <b>Greedy</b> topic. Notes example: W=40, h=[4,8,10,2,5], w=[4,4,20,8,16] → 25.75."],
+        ["tip", "Fractional knapsack is solved greedily (sort by ratio, cut the last item). Its proof and code live in the <b>Greedy</b> topic. Example: W=40, h=[4,8,10,2,5], w=[4,4,20,8,16] → 25.75."],
         ["viz", "knapsack", "0/1 table: each cell is max(skip = cell above, take = value + cell above shifted left by the weight)."],
         ["viz", "dp_loopDirection", "Same items, three presets. Descending keeps 0/1 correct (5); ascending is unbounded (6). The bug preset shows a 0/1 solution accidentally reusing an item."],
         ["probs", [
@@ -484,7 +483,7 @@
       { h: "DP on two strings", blocks: [
         ["p", "With two strings, the state is a pair of prefixes: dp[i][j] for s1[0..i) and s2[0..j). Compare the last characters. Three neighbours matter: <b>diagonal</b> (use both last chars), <b>up</b> (drop s1's last), <b>left</b> (drop s2's last). Row 0 and column 0 are the empty-string base cases."],
         ["viz", "lcs", "Match → diagonal + 1; mismatch → max(up, left). The final frame traces one LCS back through the table."],
-        ["viz", "dp_editDistance", "Three coloured choices per mismatch. Try the notes presets with costs Ci=2, Cd=2, Cr=3."],
+        ["viz", "dp_editDistance", "Three coloured choices per mismatch. Try the presets with costs Ci=2, Cd=2, Cr=3."],
         ["probs", [
           { t: "Longest common subsequence", d: "Medium", q: "Length of the longest sequence that is a subsequence of both strings.", ex: "abbcdgf vs bacdegf → 5 (acdgf)\ndemocrat vs republican → 3 (eca)\nabcd vs aebd → 3 (abd)",
             ap: [
@@ -671,7 +670,6 @@
   /* ═════════════════════════ GREEDY ═════════════════════════ */
   T["greedy"] = {
     name: "Greedy algorithms", icon: "🎯", color: "#c4561f", minutes: 60,
-    notes: "greedy.pdf, DP3, DP5, Questionset1.pdf",
     summary: "Make the locally best choice by the right key, prove it can never hurt, and never look back.",
     sections: [
       { h: "What greedy is, and how to trust it", blocks: [
@@ -679,7 +677,7 @@
         ["p", "A greedy algorithm sorts or orders choices by some key and commits to the best one at each step. It is usually O(N log N) and short to code. The hard part is picking the key and showing it is safe."],
         ["steps", [
           ["Guess a key", "Max profit first? Earliest deadline? Shortest job? Earliest end? Highest ratio?"],
-          ["Attack it with tiny counter-examples", "The notes kill 'shortest duration first' and 'earliest start first' with 3-job examples before landing on 'earliest end'. Spend two minutes here; it saves an hour."],
+          ["Attack it with tiny counter-examples", "Kill 'shortest duration first' and 'earliest start first' with 3-job examples before landing on 'earliest end'. Spend two minutes here; it saves an hour."],
           ["Prove it (exchange argument)", "Take any optimal answer. Show you can swap its first choice for the greedy choice without making it worse. Then the greedy choice is part of some optimal answer; repeat on the rest."],
           ["Or fix past mistakes", "If no single order works, process in a forced order and keep a heap so you can <b>undo the worst earlier choice</b> when a better one arrives (expiry problem)."]]],
         ["table", ["Problem", "Tempting greedy", "Counter-example", "Use instead"], [
@@ -705,7 +703,7 @@
               { n: "Optimal", cx: "O(N log N) time · O(N) space",
                 idea: "Sort by <b>end time</b>; pick a job if its start ≥ the last picked end. Exchange argument: the optimal schedule's first job can be swapped for the earliest-ending job without a clash, so some optimal answer starts with it.",
                 code: "def max_activities(S, E):\n    jobs = sorted(zip(S, E), key=lambda job: job[1])   # by end time\n    count = 0\n    last_end = float('-inf')\n    for s, e in jobs:\n        if s >= last_end:          # starts after the last picked job ends\n            count += 1\n            last_end = e\n    return count" }],
-            edge: "Decide whether touching jobs (end == next start) are allowed; the notes allow them (start ≥ last end).", viz: "activitySelection" },
+            edge: "Decide whether touching jobs (end == next start) are allowed; here they are (start ≥ last end).", viz: "activitySelection" },
           { t: "Non-overlapping intervals (min removals)", d: "Medium", q: "Remove the fewest intervals so the rest don't overlap.", ex: "[[1,2],[2,3],[3,4],[1,3]] → 1 (remove [1,3])",
             ap: [
               { n: "Brute force", cx: "O(N²) time · O(N) space",
@@ -795,7 +793,7 @@
 
       { h: "Fractional knapsack", blocks: [
         ["p", "If items can be cut, every unit of capacity should go to the <b>highest value-per-weight</b> item still available. Swapping any lower-ratio portion for higher-ratio portion never decreases value, so sorting by ratio is optimal. As soon as items cannot be cut (0/1), this breaks; see the knapsack section of DP."],
-        ["math", [["Ratios h/w", "4/4, 8/4, 10/20, 2/8, 5/16", "1, 2, 0.5, 0.25, 0.3125"], ["Take whole (8,4), (4,4), (10,20)", "8 + 4 + 10", "22, capacity 40 → 12"], ["Cut (5,16) to 12", "5 × 12/16", "3.75"], ["Total", "22 + 3.75", "25.75"]], "Notes example: N=5, W=40, h=[4,8,10,2,5], w=[4,4,20,8,16]."],
+        ["math", [["Ratios h/w", "4/4, 8/4, 10/20, 2/8, 5/16", "1, 2, 0.5, 0.25, 0.3125"], ["Take whole (8,4), (4,4), (10,20)", "8 + 4 + 10", "22, capacity 40 → 12"], ["Cut (5,16) to 12", "5 × 12/16", "3.75"], ["Total", "22 + 3.75", "25.75"]], "Example: N=5, W=40, h=[4,8,10,2,5], w=[4,4,20,8,16]."],
         ["probs", [
           { t: "Fractional knapsack (cakes)", d: "Medium", q: "Cakes with happiness h[i] and weight w[i]; capacity W; a fraction f of a cake gives f·h[i]. Maximise happiness.", ex: "N=5, W=40, h=[4,8,10,2,5], w=[4,4,20,8,16] → 25.75",
             ap: [

@@ -293,10 +293,10 @@ BP.CASES.push({
       why: "A max_id cursor is anchored to a point in time, unlike an offset that shifts every time a new tweet arrives at the top."
     },
     {
-      q: "Your HLD notes rejected precomputed per-user feeds for Facebook. Why does Twitter choose them anyway?",
+      q: "A classic Facebook news-feed design rejects precomputed per-user feeds. Why does Twitter choose them anyway?",
       o: ["Twitter has fewer users","Reads outnumber writes heavily, lists are capped at about 800 IDs, and huge accounts are handled by the celebrity exception","Redis is free","Facebook was wrong"],
       a: 1,
-      why: "The costs the notes worry about (storage, write fan-out) are kept small by storing only IDs, capping lists and pulling celebrities."
+      why: "The worrying costs (storage, write fan-out) are kept small by storing only IDs, capping lists and pulling celebrities."
     }
   ],
   sources: ["Twitter Engineering: Timelines at Scale (2013 talk)","Twitter Engineering: Announcing Snowflake (2010)","Twitter Engineering: Earlybird real-time search","Twitter: 143,199 tweets per second record (2013)"],
@@ -331,19 +331,19 @@ BP.CASES.push({
       ]
     },
     {
-      h: "Push, pull, or both? (and how this compares with your notes)",
+      h: "Push, pull, or both? (and how this compares with an early Facebook feed)",
       blocks: [
-        ["p","Your Scaler notes work through the same problem for an early Facebook news feed, and they reach the opposite conclusion. That is worth understanding, because interviewers love asking “why not the other way?”"],
-        ["p","In the notes, sharding by user_id makes the profile page cheap (everything about you lives on your shard) but the feed expensive (your friends' posts live on their shards). The notes <b>reject</b> precomputing each user's feed for three reasons: far more storage, 1,000+ writes for every post, and the feed algorithm being baked in. Instead they estimate the data: about 5 million posters a day (1% of 500 million, from the 80-20-1 rule), around 4 posts each, about 300 bytes a post, so 6 GB a day and 180 GB for 30 days. That is small enough to keep <b>all recent posts</b> in one derived store, replicated on many machines, and query it at read time."],
+        ["p","A classic design for an early Facebook news feed works through the same problem and reaches the opposite conclusion. That is worth understanding, because interviewers love asking “why not the other way?”"],
+        ["p","In that design, sharding by user_id makes the profile page cheap (everything about you lives on your shard) but the feed expensive (your friends' posts live on their shards). It <b>rejects</b> precomputing each user's feed for three reasons: far more storage, 1,000+ writes for every post, and the feed algorithm being baked in. Instead it estimates the data: about 5 million posters a day (1% of 500 million, from the 80-20-1 rule), around 4 posts each, about 300 bytes a post, so 6 GB a day and 180 GB for 30 days. That is small enough to keep <b>all recent posts</b> in one derived store, replicated on many machines, and query it at read time."],
         ["table",["","Fan-out on write (push)","Fan-out on read (pull)","Hybrid (Twitter)"],[["When the work happens","When a tweet is posted","When a timeline is opened","Push for most accounts, pull for celebrities"],["Read cost","One list lookup","Gather and merge many accounts' posts","One lookup plus a small merge"],["Write cost","One insert per follower","One insert","One insert per follower, except celebrities"],["Storage","IDs copied into every follower's list","One copy of each post","Mostly IDs, bounded by the 800 cap"],["Changing ranking","Harder: lists are precomputed","Easy: rank at read time","Ranking applied on read over the merged candidates"],["Weak spot","Huge accounts, wasted work for inactive readers","Users who follow thousands of accounts","More moving parts"]]],
-        ["p","So why does Twitter push? Its numbers lean differently. Reads beat writes about 50 to 1, follow lists are one-directional and can be long, and storing only IDs with an 800 cap keeps the storage cost the notes worried about small. Ranking still happens at read time over the merged list, which keeps the algorithm flexible. And the celebrity exception removes the worst write storms. Both designs are right for their numbers. The skill is showing <i>which numbers</i> tip the decision."],
-        ["tip","A useful habit from the notes: a cache is any faster derived copy of data. Twitter's Redis timelines and the notes' “recent posts” disk store are both caches in that sense. One is in RAM, the other is on disk."]
+        ["p","So why does Twitter push? Its numbers lean differently. Reads beat writes about 50 to 1, follow lists are one-directional and can be long, and storing only IDs with an 800 cap keeps the worrying storage cost small. Ranking still happens at read time over the merged list, which keeps the algorithm flexible. And the celebrity exception removes the worst write storms. Both designs are right for their numbers. The skill is showing <i>which numbers</i> tip the decision."],
+        ["tip","A useful habit: think of a cache as any faster derived copy of data. Twitter's Redis timelines and the Facebook design's “recent posts” disk store are both caches in that sense. One is in RAM, the other is on disk."]
       ]
     },
     {
       h: "How a Snowflake ID is built",
       blocks: [
-        ["p","Your notes walk through why the obvious ID schemes fail in a distributed system: an auto-increment counter repeats across machines, UUIDs are not ordered, and a plain timestamp collides when two machines act in the same millisecond. Snowflake fixes all three by packing several fields into one 64-bit number."],
+        ["p","It's worth walking through why the obvious ID schemes fail in a distributed system: an auto-increment counter repeats across machines, UUIDs are not ordered, and a plain timestamp collides when two machines act in the same millisecond. Snowflake fixes all three by packing several fields into one 64-bit number."],
         ["table",["Bits","Field","What it buys you"],[["1","Sign bit, always 0","The ID stays a positive number in every language"],["41","Milliseconds since a custom epoch (Twitter used 4 Nov 2010)","Time ordering; about 69.7 years of range"],["5","Datacenter ID","Up to 32 datacenters"],["5","Machine ID","Up to 32 machines per datacenter, 1,024 in total"],["12","Sequence number, reset every millisecond","4,096 IDs per millisecond per machine"]]],
         ["p","Do the maths and one machine can produce about 4.1 million IDs a second, with no network call. Even the record 143,000 tweets a second is a rounding error for that."],
         ["warn","Two catches. IDs are only <i>roughly</i> ordered across machines, because their clocks differ by a few milliseconds. That is fine for a timeline. And if a machine's clock jumps backwards, it could repeat an ID, so the generator must refuse to issue IDs until its clock catches up. If a machine runs out of its 4,096 numbers within a millisecond, it simply waits for the next millisecond."]

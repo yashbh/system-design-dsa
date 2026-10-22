@@ -5,7 +5,6 @@ BP.LESSONS.push({
   icon: "🎫",
   minutes: 27,
   title: "Popular questions: unique ID generators & rate limiters",
-  scaler: "HLD 16.1 · Unique ID Generator · HLD 16.2 · Rate Limiters",
   summary: "Two interview favourites in one sitting: how a thousand machines hand out unique, time-sorted IDs without ever talking to each other, and how to politely say “slow down” to a client that's calling too often.",
   concepts: ["snowflake","id-generation","rate-limiting"],
   related: ["bitly","stripe"],
@@ -16,7 +15,7 @@ BP.LESSONS.push({
       ["p","This lesson covers two questions that show up in system design interviews again and again, partly because they're small enough to solve in 20 minutes and partly because they touch everything else. First, the <b>unique ID generator</b>. Second, the <b>rate limiter</b>, the bouncer that decides how often each client is allowed to call you. Both are about one machine making a correct decision quickly, without waiting on all the others."]
     ] },
     { h: "What makes a good ID?", blocks: [
-      ["p","Before choosing a scheme, write down what you actually need. The notes ask for IDs with three properties."],
+      ["p","Before choosing a scheme, write down what you actually need. We want IDs with three properties."],
       ["list",["<b>8-byte numeric.</b> A 64-bit integer. It fits in a <code>BIGINT</code> column, it's fast to compare and index, and it's small enough to put in URLs and logs.","<b>Unique across machines.</b> No two rows anywhere in the system ever share an ID, even if they were created on different servers in the same millisecond.","<b>Roughly time-ordered.</b> If t₁ &lt; t₂ then id₁ &lt; id₂. So “sort by ID” means “sort by creation time”, which is gold for feeds, timelines and pagination."]],
       ["p","And one unwritten requirement: it must be <b>fast</b>, generated at high rates without a round trip to some central authority for every new ID. Keep these four in mind; every option below fails at least one of them, except the last."]
     ] },
@@ -53,7 +52,7 @@ BP.LESSONS.push({
     ] },
     { h: "Part 2: the bouncer at the door", blocks: [
       ["p","New scenario. You've launched a public API. One morning a single customer's buggy script starts calling your search endpoint 3,000 times a second, in a loop. Your database melts, and every other customer's requests time out. Nobody did anything malicious; one client just forgot to add a <code>sleep</code>."],
-      ["p","A <b>rate limiter</b> caps how often a client may call you. A client might be identified by IP address, user ID, API key, or the endpoint being called. The notes' example: <b>5 requests per 60 seconds per IP</b>. The sixth request in that window is rejected with <b>HTTP 429 Too Many Requests</b>, usually with a <code>Retry-After</code> header telling the client when to try again, and often <code>X-RateLimit-*</code> headers showing the limit and how much is left."],
+      ["p","A <b>rate limiter</b> caps how often a client may call you. A client might be identified by IP address, user ID, API key, or the endpoint being called. For example: <b>5 requests per 60 seconds per IP</b>. The sixth request in that window is rejected with <b>HTTP 429 Too Many Requests</b>, usually with a <code>Retry-After</code> header telling the client when to try again, and often <code>X-RateLimit-*</code> headers showing the limit and how much is left."],
       ["img","86 Street turnstiles vc.jpg","A turnstile is a physical rate limiter: it lets people through at a pace the platform can handle."],
       ["p","Why bother? Rate limiting protects you from abuse and denial-of-service attacks, enforces quotas for paid plans (“free tier: 1,000 calls a day”), keeps one noisy customer from starving everyone else, and shields fragile downstream services. It usually lives in the <b>API gateway</b>, the front door that every request passes through, or as middleware in your app servers."],
       ["p","The hard part isn't the idea, it's the counting. How do you decide, quickly and cheaply, whether this particular request is the fifth or the sixth in its window? There are five classic algorithms, and they trade accuracy against memory in different ways. We'll start with the simplest."]
@@ -61,13 +60,13 @@ BP.LESSONS.push({
     { h: "Fixed window: one counter per window", blocks: [
       ["p","Chop time into fixed windows, say every 50 seconds, and keep one counter per client per window. Each request increments the counter. If the counter is already at the limit, reject. When the next window starts, the counter resets to zero."],
       ["p","It's wonderfully cheap: one integer per client. In Redis it's two commands, <code>INCR</code> on a key like <code>rl:1.2.3.4:window17</code> and an <code>EXPIRE</code> so old windows clean themselves up."],
-      ["p","Now the flaw. Take the notes' example: a limit of 100 requests per 50 seconds. A client sends 100 requests between second 40 and second 50, all allowed, because that window had room. At second 50 the counter resets. The client sends another 100 between seconds 51 and 60, all allowed again."],
+      ["p","Now the flaw. Take an example: a limit of 100 requests per 50 seconds. A client sends 100 requests between second 40 and second 50, all allowed, because that window had room. At second 50 the counter resets. The client sends another 100 between seconds 51 and 60, all allowed again."],
       ["math",[["Requests in seconds 40–50","window 1, under the limit","100 allowed"],["Requests in seconds 51–60","window 2, fresh counter","100 allowed"],["Total in about 20 seconds","100 + 100","200, double the limit"]],"The limit is enforced per window, but nothing stops a burst straddling the boundary."],
       ["p","If your goal is “never more than 100 in any 50-second stretch”, the fixed window fails it by a factor of two. For a lot of use cases that's acceptable. For protecting a fragile database, it might not be."]
     ] },
     { h: "Sliding window log: exact, but hungry", blocks: [
       ["p","To fix the boundary problem, stop thinking in fixed windows and ask the real question for every request: “how many requests did this client make in the <i>last</i> N seconds?” To answer it exactly, you remember the timestamp of every request."],
-      ["p","The notes keep a <b>deque</b> per IP (a double-ended queue: you can add to the back and remove from the front cheaply). New timestamps are pushed onto the back; expired ones are popped off the front. Here's their worked example with a 5-second window:"],
+      ["p","Keep a <b>deque</b> per IP (a double-ended queue: you can add to the back and remove from the front cheaply). New timestamps are pushed onto the back; expired ones are popped off the front. Here's their worked example with a 5-second window:"],
       ["steps",[["The state at t = 15","The deque holds [10, 11, 12, 12, 13, 14, 15]. (Two requests arrived at second 12.)"],["A request arrives at t = 16","The window covers the last 5 seconds, so the cutoff is 16 − 5 + 1 = 12. Anything older than 12 is outside the window."],["Evict","Pop 10 and 11 from the front. The deque is now [12, 12, 13, 14, 15]: five requests in the window."],["Decide","If five is under the limit, push 16 and allow the request. Otherwise reject it, and don't record it."]]],
       ["p","This is exact: no boundary trick can fool it. The cost is memory. You store one timestamp per request, so a client allowed ~10,000 requests per window needs ~10,000 timestamps, and every request may pop a pile of old ones. Multiply by millions of clients and it gets heavy fast. In Redis this is usually a sorted set per client, trimmed with <code>ZREMRANGEBYSCORE</code> and counted with <code>ZCARD</code>."]
     ] },
@@ -75,7 +74,7 @@ BP.LESSONS.push({
       ["p","What if you could get almost the accuracy of the log with almost the memory of the fixed window? That's the <b>sliding window counter</b>. Keep just two numbers per client: the count from the previous window and the count in the current window."],
       ["p","Then estimate how many requests fall in the sliding window by assuming the previous window's requests were spread evenly. If you're 40% of the way into the current window, the last full window-length covers the final 60% of the previous window plus everything so far in this one."],
       ["code","estimate = prev_count × (1 − elapsed_fraction) + curr_count"],
-      ["p","The notes' numbers: windows of 50 seconds. The previous window (seconds 51–100) had 60 requests. The current window (101–150) has 40 so far, and it's now t = 120, so 20 of 50 seconds have passed: 40% elapsed."],
+      ["p","Some numbers: windows of 50 seconds. The previous window (seconds 51–100) had 60 requests. The current window (101–150) has 40 so far, and it's now t = 120, so 20 of 50 seconds have passed: 40% elapsed."],
       ["math",[["Share of the previous window still in view","1 − 0.4","0.6"],["Previous window's contribution","60 × 0.6","36"],["Estimate","36 + 40","76, compare with the limit"]],"Two integers per client, and a decision that's close to exact."],
       ["p","Another example, to make it stick: limit 100 per minute, previous minute 80 requests, current minute 30, 25% of the way in. Estimate = 80 × 0.75 + 30 = 90, under 100, so allow."],
       ["tip","The “evenly spread” assumption is the approximation. If all 60 of the previous window's requests actually came in its final second, the estimate undercounts. In practice it's close enough that big companies use it happily, and Cloudflare has written about counting this way at scale."],

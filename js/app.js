@@ -106,7 +106,7 @@
   const lessonsFor = (id) => (BP.LESSONS || []).filter((l) => l.concepts.includes(id));
   function usedLinks(id) {
     const k = C[id], ls = lessonsFor(id);
-    return (ls.length ? `<h4 style="margin-top:26px">Learn it in the course</h4><div class="used">${ls.map((l) => `<a href="#/lesson/${l.id}"><div><b>${l.title}</b><br><small class="muted">${l.scaler}</small></div></a>`).join("")}</div>` : "") +
+    return (ls.length ? `<h4 style="margin-top:26px">Learn it in the course</h4><div class="used">${ls.map((l) => `<a href="#/lesson/${l.id}"><div><b>${l.title}</b><br><small class="muted">${l.summary}</small></div></a>`).join("")}</div>` : "") +
       (k.used.length ? `<h4 style="margin-top:26px">Seen in these case studies</h4><div class="used">${k.used.map((cid) => { const c = byId[cid]; return `<a href="#/case/${cid}" style="--c:${c.color}"><span class="app-icon mini" style="--brand:${c.color}">${c.app[0]}</span><div><b>${c.app}</b><br><small class="muted">${c.title}</small></div></a>`; }).join("")}</div>` : "");
   }
   function closeConcept() { drawer.classList.remove("on"); drawerBg.classList.remove("on"); }
@@ -256,7 +256,7 @@
       </section>
 
       <section class="section reveal">
-        <div class="section-head"><div class="eyebrow">The course</div><h2>Learn the fundamentals, one interactive lesson at a time</h2><p>${LESSONS().length} lessons following the Scaler HLD curriculum: DNS to Kafka to sagas, with ${LESSONS().reduce((a, l) => a + l.sections.reduce((b, s) => b + s.blocks.filter((x) => ["fig", "sim", "flow", "chart"].includes(x[0])).length, 0), 0)} animated diagrams and charts.</p></div>
+        <div class="section-head"><div class="eyebrow">The course</div><h2>Learn the fundamentals, one interactive lesson at a time</h2><p>${LESSONS().length} lessons, from DNS to Kafka to sagas, with ${LESSONS().reduce((a, l) => a + l.sections.reduce((b, s) => b + s.blocks.filter((x) => ["fig", "sim", "flow", "chart"].includes(x[0])).length, 0), 0)} animated diagrams and charts.</p></div>
         <div class="mod-grid stagger">${BP.MODULES.map((m, i) => { const ls = LESSONS().filter((l) => l.mod === m.id), dn = ls.filter((l) => p.done[lessonKey(l.id)]).length; return `<a class="card mod-card mod-${m.id}" href="#/lesson/${ls[0].id}"><div class="mod-thumb">${BP.LESSON_SCENES[ls[0].id] ? BP.scene(BP.LESSON_SCENES[ls[0].id]) : ""}</div><div class="row" style="justify-content:space-between"><span class="mod-dot"></span><span class="tag">Module ${i + 1}</span></div><h4>${m.name}</h4><p>${m.desc}</p><div class="small muted">${ls.length} lessons · ${dn} done</div><div class="xp-bar" style="margin-top:8px"><i style="width:${(dn / ls.length) * 100}%"></i></div></a>`; }).join("")}</div>
         <div style="margin-top:18px"><a class="btn primary" href="#/course">Open the full course →</a></div>
       </section>
@@ -570,7 +570,7 @@
     setAccent("#7c5cff", "#22d3ee");
     const p = store.get(), all = LESSONS(), done = all.filter((l) => p.done[lessonKey(l.id)]).length;
     app.innerHTML = `<div class="view">
-      <section class="case-hero"><div class="eyebrow">HLD course · follows the Scaler curriculum</div>
+      <section class="case-hero"><div class="eyebrow">System design course</div>
         <h1>System design, <span class="grad">from first principles</span></h1>
         <p class="tagline">${all.length} lessons in ${BP.MODULES.length} modules. Each one starts from a story, derives the design step by step, and lets you poke at it with interactive diagrams. Every lesson ends with a quiz and hand-picked further reading (ByteByteGo, official docs, engineering blogs).</p>
         <div class="course-prog"><div class="xp-bar" style="width:100%;height:10px"><i style="width:${(done / all.length) * 100}%"></i></div><span class="small muted"><b style="color:var(--text)">${done}</b> / ${all.length} lessons completed</span></div>
@@ -583,12 +583,11 @@
             <div class="lt"><b>${l.title}</b><small>${l.summary}</small><div class="row" style="gap:6px;margin-top:8px">${l.concepts.slice(0, 4).map((c) => C[c] ? `<span class="tag">${C[c].name.split(" (")[0]}</span>` : "").join("")}</div></div>
             <span class="lm"><span>${l.minutes} min</span><span>${l.sections.reduce((a, s) => a + s.blocks.filter((b) => ["fig", "sim", "flow", "chart"].includes(b[0])).length, 0)} interactive</span></span>
           </a>`; }).join("")}</div></section>`).join("")}
-      <p class="muted small" style="margin-top:40px">Content is written for this app from the topics, stories and numbers of the Scaler HLD notes you shared (2024 notes plus readings; the 2025 docs need a Scaler login). Material that goes beyond the notes is marked <b>📚 Beyond the notes</b>.</p>
       ${footer()}</div>`;
     observe(".reveal"); observe(".stagger");
   }
 
-  const CALLOUT = { analogy: ["💡", "Think of it like…", "analogy"], tip: ["✅", "Key insight", "co-tip"], warn: ["⚠️", "Watch out", "co-warn"], extra: ["📚", "Beyond the notes", "co-extra"] };
+  const CALLOUT = { analogy: ["💡", "Think of it like…", "analogy"], tip: ["✅", "Key insight", "co-tip"], warn: ["⚠️", "Watch out", "co-warn"], extra: ["📚", "Going further", "co-extra"] };
   function block(b) {
     const [t, a, c] = b;
     if (t === "p") return `<p class="lp">${a}</p>`;
@@ -624,7 +623,7 @@
       <section class="case-hero">
         <a class="back" href="#/course">← Course · ${mod.name}</a>
         <div class="hero-split"><div>
-        <div class="app-row"><span class="mod-dot"></span><div><div class="eyebrow">${mod.name} · lesson ${i + 1} of ${all.length}</div><div class="muted small">${l.minutes} min · ${l.scaler}</div></div></div>
+        <div class="app-row"><span class="mod-dot"></span><div><div class="eyebrow">${mod.name} · lesson ${i + 1} of ${all.length}</div><div class="muted small">${l.minutes} min read</div></div></div>
         <h1>${l.title}</h1>
         <p class="tagline">${l.summary}</p>
         <div class="row">${l.concepts.map(chip).join("")}</div>
@@ -734,7 +733,7 @@
       <section class="dsa-hero">
         <div><div class="eyebrow">Data structures &amp; algorithms</div>
           <h1>Watch the algorithm think, then solve it yourself</h1>
-          <p class="lead">${T.length} topics built from your interview notes: every pattern has a step-through animation with the code line it's running, the brute force → optimal path for each problem, and a LeetCode practice list you can tick off.</p>
+          <p class="lead">${T.length} topics: every pattern has a step-through animation with the code line it's running, the brute force → optimal path for each problem, and a LeetCode practice list you can tick off.</p>
           <div class="dsa-stats"><div><b>${T.length}</b><small>topics</small></div><div><b>${algos.length}</b><small>step-through animations</small></div><div><b>${nProb}</b><small>worked problems</small></div><div><b><span id="dsa-lc-count">${Object.keys(lcStore.get()).length}</span>/${nLc}</b><small>LeetCode solved</small></div></div>
         </div>
         <div class="fig-host" data-viz="binarySearch"></div>
@@ -769,7 +768,7 @@
     app.innerHTML = `<div class="view">
       <section class="case-hero">
         <a class="back" href="#/dsa">← DSA · all topics</a>
-        <div class="app-row"><span class="app-icon" style="--brand:${t.color};font-size:1.4rem">${t.icon}</span><div><div class="eyebrow">Topic ${i + 1} of ${order.length}</div><div class="muted small">${t.minutes} min${t.notes ? ` · from your notes: ${t.notes}` : ""}</div></div></div>
+        <div class="app-row"><span class="app-icon" style="--brand:${t.color};font-size:1.4rem">${t.icon}</span><div><div class="eyebrow">Topic ${i + 1} of ${order.length}</div><div class="muted small">${t.minutes} min read</div></div></div>
         <h1>${t.name}</h1>
         <p class="tagline">${t.summary}</p>
       </section>
@@ -777,7 +776,7 @@
         <nav class="toc">${secs.map(([sid, h]) => `<a href="#" data-sec="${sid}">${h}</a>`).join("")}<div class="progress"><i id="read-prog"></i></div></nav>
         <div class="case-body">
           ${t.sections.map((s, k) => `<section class="section lsec" id="ds-${k}" style="${k ? "" : "margin-top:20px"}"><div class="section-head reveal"><h2>${s.h}</h2></div>${s.blocks.map(block).join("")}</section>`).join("")}
-          ${t.lc && t.lc.length ? `<section class="section" id="ds-lc"><div class="section-head reveal"><div class="eyebrow">Practice</div><h2>LeetCode practice</h2><p>Mostly from the Top Interview 150 list, plus classics from your notes. Ticks are saved in this browser.</p></div>${lcList(t.lc)}</section>` : ""}
+          ${t.lc && t.lc.length ? `<section class="section" id="ds-lc"><div class="section-head reveal"><div class="eyebrow">Practice</div><h2>LeetCode practice</h2><p>Mostly from the Top Interview 150 list, plus a few classics. Ticks are saved in this browser.</p></div>${lcList(t.lc)}</section>` : ""}
           ${t.quiz && t.quiz.length ? `<section class="section" id="ds-quiz"><div class="section-head reveal"><div class="eyebrow">Check yourself</div><h2>Quiz</h2></div><div class="quiz" id="quiz"></div></section>` : ""}
           <div class="pager">
             ${prev ? `<a href="#/dsa/${prev}"><small>← Previous topic</small><b>${D.topics[prev].name}</b></a>` : `<a href="#/dsa"><small>←</small><b>All topics</b></a>`}

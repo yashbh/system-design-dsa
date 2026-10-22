@@ -12,18 +12,17 @@ Then open http://localhost:5179. No build step and no dependencies.
 
 ## HLD course (new)
 
-18 interactive lessons in 6 modules that follow the Scaler HLD curriculum (2025 sheet): Foundations → Caching → Databases at scale → Classic case studies → Infrastructure building blocks → Microservices. Each lesson has the story, the derivation, the back-of-the-envelope math, interactive figures, a quiz, and checked further-reading links (ByteByteGo, official docs, engineering blogs).
+18 interactive lessons in 6 modules: Foundations → Caching → Databases at scale → Classic case studies → Infrastructure building blocks → Microservices. Each lesson has the story, the derivation, the back-of-the-envelope math, interactive figures, a quiz, and checked further-reading links (ByteByteGo, official docs, engineering blogs).
 
-The lessons were written for this app from the topics, stories and numbers in the Scaler notes: the public 2024 notes and readings, plus the S3/Uber/Hotstar documents. The 2025 docs need a Scaler login. Anything beyond the notes is marked "📚 Beyond the notes".
 
 The interactive figure library (`js/figs-*.js`, 28 figures) covers DNS resolution, vertical vs horizontal scaling, load-balancer algorithms with health checks, the memory hierarchy, the cache request path, write policies, eviction (FIFO/LRU/LFU side by side), a Redis leaderboard, CAP/PACELC, replication, quorum (R+W>N), a sharding-key playground, data models, an LSM tree, a Bloom filter, a typeahead trie, Kafka, ZooKeeper election, an inverted index, HDFS, a quadtree, Snowflake IDs, rate-limiting algorithms, monolith vs microservices, saga, circuit breaker, the code-judge cache and messenger sharding.
 
 ## DSA section (new)
 
-The **DSA** tab in the top bar is a separate interview-prep track built from the handwritten DSA notes (64 PDFs, 16 topics) plus LeetCode practice:
+The **DSA** tab in the top bar is a separate interview-prep track: 19 topics with animations, worked problems and LeetCode practice:
 
 - **Step-through animations.** Each one shows the data (arrays, bars, grids, trees, graphs, linked lists, stacks, bits, intervals), highlights the line of code being run, and explains each step. You can play, pause, step, scrub and change the speed, and edit the input to rerun.
-- **Topic pages** organised in six phases, from Foundations to Optimisation. Each topic starts from intuition, works through every problem in the notes as a card (brute force → key idea → complexity → code, with company tags), and ends with a cheat sheet and a quiz.
+- **Topic pages** organised in six phases, from Foundations to Optimisation. Each topic starts from intuition, works through each problem as a card (brute force → key idea → complexity → code, with company tags), and ends with a cheat sheet and a quiz.
 - **LeetCode practice** for every topic, mostly from the Top Interview 150 list. Ticks are saved in the browser.
 - A **pattern table** that maps question wording to the technique it calls for, and a **playground** with every animation.
 

@@ -1,4 +1,4 @@
-/* Blueprint — DSA: linked lists, stacks & queues, heaps, tries. Content from the user's notes (ll1–ll3, stack1–stack2, queue1, heap1–heap2, trie1–trie2) plus LeetCode practice. */
+/* Blueprint — DSA: linked lists, stacks & queues, heaps, tries. Worked examples plus LeetCode practice. */
 (function () {
   const T = BP.DSA.topics;
   const { nums, clone, cap } = BP.AV;
@@ -13,7 +13,7 @@
   /* ═════════ NEW ANIMATIONS (prefix lin_) ═════════ */
 
   A.lin_mergeSorted = { title: "Merge two sorted lists with a dummy node", inputLabel: "list 1 | list 2", input: "2 6 10 14 19 | 3 5 9 11",
-    presets: [["Notes example", "2 6 10 14 19 | 3 5 9 11"], ["Quiz", "2 10 11 | 1 5 12 15"], ["One list empty", " | 4 8"]],
+    presets: [["Worked example", "2 6 10 14 19 | 3 5 9 11"], ["Quiz", "2 10 11 | 1 5 12 15"], ["One list empty", " | 4 8"]],
     about: "Two sorted lists (shown as chips) are woven into one chain. The highlighted chip is the front node being compared; the list panel is the merged result, with the tail pointer on its last node.",
     code: ["dummy = Node(-1)", "tail = dummy", "while t1 and t2:", "    if t1.val <= t2.val:      # <= keeps it stable", "        tail.next = t1", "        t1 = t1.next", "    else:", "        tail.next = t2", "        t2 = t2.next", "    tail = tail.next", "tail.next = t1 if t1 else t2  # one link attaches the rest", "return dummy.next"],
     gen(s) {
@@ -42,7 +42,7 @@
     } };
 
   A.lin_lru = { title: "LRU cache: HashMap + doubly linked list", inputLabel: "capacity | ops (s1=3 sets key 1, g2 gets key 2)", input: "4 | s1=3 s2=5 s4=7 s15=3 g2 s2=10 s8=9 s1=20 g2 g4",
-    presets: [["Notes trace, capacity 4", "4 | s1=3 s2=5 s4=7 s15=3 g2 s2=10 s8=9 s1=20 g2 g4"], ["Notes trace, capacity 2", "2 | s1=10 s5=12 g5 g1 g10 s6=14 g5"]],
+    presets: [["Trace, capacity 4", "4 | s1=3 s2=5 s4=7 s15=3 g2 s2=10 s8=9 s1=20 g2 g4"], ["Trace, capacity 2", "2 | s1=10 s5=12 g5 g1 g10 s6=14 g5"]],
     about: "Each step runs one get or set. The list runs from least recent (just after H) to most recent (just before T); the grid is the HashMap that finds any node in O(1). Green = hit, red = evicted.",
     code: ["def get(key):", "    if key not in mp:", "        return -1              # MISS", "    move_to_tail(mp[key])      # HIT: unlink, re-add before T", "    return mp[key].val", "def put(key, val):", "    if key in mp:", "        mp[key].val = val", "        move_to_tail(mp[key])  # now most recent", "        return", "    if len(mp) == cap:", "        evict(head.next)       # LRU: unlink + del mp[its key]", "    mp[key] = Node(key, val)", "    add_to_tail(mp[key])"],
     gen(s) {
@@ -77,7 +77,7 @@
     } };
 
   A.lin_postfix = { title: "Stack: evaluate a postfix expression", inputLabel: "tokens", input: "3 5 + 2 - 2 5 * -",
-    presets: [["Notes example", "3 5 + 2 - 2 5 * -"], ["(2+1)*3", "2 1 + 3 *"], ["Division order", "4 13 5 / +"]],
+    presets: [["Worked example", "3 5 + 2 - 2 5 * -"], ["(2+1)*3", "2 1 + 3 *"], ["Division order", "4 13 5 / +"]],
     about: "Tokens are read left to right (the highlighted cell). Numbers are pushed; an operator pops its two operands, right one first, and pushes the result. The stack's top is on the right.",
     code: ["for tok in tokens:", "    if tok in '+-*/':", "        op2 = st.pop()         # RIGHT operand comes off first", "        op1 = st.pop()         # then the LEFT operand", "        st.append(apply(tok, op1, op2))", "    else:", "        st.append(int(tok))", "return st[-1]"],
     gen(s) {
@@ -103,7 +103,7 @@
     } };
 
   A.lin_histogram = { title: "Largest rectangle in a histogram (nearest smaller on both sides)", inputLabel: "bar heights", input: "2 1 5 6 2 3",
-    presets: [["LeetCode example", "2 1 5 6 2 3"], ["Notes, 20 bars", "2 1 4 7 5 2 1 3 4 5 6 4 3 2 3 1 5 6 4 2"], ["All equal", "3 3 3 3"]],
+    presets: [["LeetCode example", "2 1 5 6 2 3"], ["20 bars", "2 1 4 7 5 2 1 3 4 5 6 4 3 2 3 1 5 6 4 2"], ["All equal", "3 3 3 3"]],
     about: "Pass 1 fills nsl (nearest smaller bar on the left) with a stack of indices, pass 2 fills nsr the same way from the right, and pass 3 treats each bar as the shortest bar of a rectangle. The shaded box is that rectangle.",
     code: ["for i in range(n):                    # pass 1: left to right", "    while st and h[st[-1]] >= h[i]:", "        st.pop()                      # taller bars can't be nsl again", "    nsl[i] = st[-1] if st else -1", "    st.append(i)", "# pass 2: the same from right to left fills nsr (N if none)", "for i in range(n):                    # pass 3", "    area = h[i] * (nsr[i] - nsl[i] - 1)", "    ans = max(ans, area)", "return ans"],
     gen(s) {
@@ -161,7 +161,7 @@
     } };
 
   A.lin_median = { title: "Median of a stream with two heaps", inputLabel: "stream", input: "6 3 8 11 20 2 10 8 13 50",
-    presets: [["Notes example 2", "6 3 8 11 20 2 10 8 13 50"], ["Notes example 1", "6 3 8 11 2"], ["Flipkart delivery times", "3 7 15 2 5 8"]],
+    presets: [["Example 2", "6 3 8 11 20 2 10 8 13 50"], ["Example 1", "6 3 8 11 2"], ["Flipkart delivery times", "3 7 15 2 5 8"]],
     about: "Each number of the stream joins one of two heaps: h1 holds the smaller half (max on top) and h2 the larger half (min on top). The highlighted chip is each heap's top; the tops straddle the middle, so the median is read from them.",
     code: ["for x in stream:", "    if not h1 or x <= h1.top():", "        h1.push(x)                 # smaller half (max-heap)", "    else:", "        h2.push(x)                 # larger half (min-heap)", "    if len(h1) > len(h2) + 1:", "        h2.push(h1.pop())          # rebalance", "    elif len(h2) > len(h1) + 1:", "        h1.push(h2.pop())", "    if len(h1) == len(h2):", "        median = (h1.top() + h2.top()) / 2", "    else:", "        median = h1.top() if len(h1) > len(h2) else h2.top()"],
     gen(s) {
@@ -187,7 +187,7 @@
 
   const heapTree = (h, hl = {}) => ({ t: "tree", nodes: h.map((v, i) => ({ id: i, label: v, parent: i ? (i - 1) >> 1 : null, side: i ? (i % 2 ? "L" : "R") : null, cls: hl[i] || "" })) });
   A.lin_buildHeap = { title: "Build a min-heap bottom-up in O(N)", inputLabel: "array", input: "7 3 5 1 6 8 10 2 13 14 -2",
-    presets: [["Notes worked example", "7 3 5 1 6 8 10 2 13 14 -2"], ["Notes build-heap problem", "5 13 -2 11 27 31 0 19"]],
+    presets: [["Worked example", "7 3 5 1 6 8 10 2 13 14 -2"], ["Build-heap problem", "5 13 -2 11 27 31 0 19"]],
     about: "The tree and the array are the same heap. Green nodes already form valid heaps. Starting at the last non-leaf and moving back to the root, each node is sifted down until it is smaller than both children.",
     code: ["for i in range((n - 2) // 2, -1, -1):  # last non-leaf to root", "    j = i                                # sift a[i] down", "    while 2 * j + 1 < n:", "        l, r, m = 2 * j + 1, 2 * j + 2, j", "        if a[l] < a[m]:", "            m = l", "        if r < n and a[r] < a[m]:      # check r < n first", "            m = r", "        if m == j:", "            break", "        a[j], a[m] = a[m], a[j]", "        j = m"],
     gen(s) {
@@ -218,7 +218,7 @@
     } };
 
   A.lin_maxXor = { title: "Binary trie: maximum XOR of a pair", inputLabel: "non-negative numbers", input: "5 20 15 10 25 30",
-    presets: [["Notes example 2", "5 20 15 10 25 30"], ["Notes example 1", "9 8 10 7"]],
+    presets: [["Example 2", "5 20 15 10 25 30"], ["Example 1", "9 8 10 7"]],
     about: "First every number is inserted as an L-bit path (0 = left, 1 = right). Then each number walks the trie from the top bit, taking the opposite bit whenever that child exists. The bit rows show x, the demanded bits, and the XOR built so far.",
     code: ["for x in A:", "    insert(root, x)              # bits MSB first: 0 left, 1 right", "for x in A:", "    curr, xr = root, 0", "    for j in range(L - 1, -1, -1):", "        b = (x >> j) & 1           # we demand 1 - b", "        if curr.child[1 - b]:", "            xr |= 1 << j           # ✓ this XOR bit is 1", "            curr = curr.child[1 - b]", "        else:", "            curr = curr.child[b]   # ✗ this XOR bit is 0", "    ans = max(ans, xr)"],
     gen(s) {
@@ -255,12 +255,11 @@
   /* ═════════ TOPIC: LINKED LISTS ═════════ */
   T["linked-list"] = {
     name: "Linked lists", icon: "🔗", color: "#0f8a6a", minutes: 80,
-    notes: "ll1.pdf, ll2.pdf, ll3.pdf, stack1.pdf",
     summary: "A chain of nodes joined by addresses. Re-wiring at a known spot is O(1), but there is no random access, so most problems are careful pointer moves: dummy nodes, slow/fast runners and in-place reversal.",
     sections: [
       { h: "Why linked lists exist", blocks: [
         ["p", "An array like <code>int arr[4]</code> needs one <b>contiguous</b> block of memory. If free memory is scattered between used cells, a big array cannot be allocated even when the total free space is enough. Removing from the front of an array also shifts every element: O(N) per removal."],
-        ["p", "A linked list stores each value in a separate <b>node</b> that can live anywhere on the heap. Each node holds a value and the address of the next node. The last node's next is NULL. The notes draw 10 @2K → 20 @8K → 30 @10K → NULL."],
+        ["p", "A linked list stores each value in a separate <b>node</b> that can live anywhere on the heap. Each node holds a value and the address of the next node. The last node's next is NULL. For example: 10 @2K → 20 @8K → 30 @10K → NULL."],
         ["analogy", "A treasure hunt. Each clue (node) tells you the value and where the next clue is hidden. You can add a clue anywhere by changing one pointer, but to reach clue 7 you must follow clues 1 to 6."],
         ["code", "class Node:\n    def __init__(self, x):\n        self.val = x\n        self.next = None\n\n# variables a, b, c live on the call stack and hold addresses;\n# the Node objects themselves live on the heap.\na = Node(10)\nb = Node(20)\na.next = b                      # 10 -> 20\na.next.next = Node(30)          # chaining with .next.next"],
         ["table", ["Operation", "Array", "Singly linked list"], [
@@ -324,13 +323,13 @@
               { n: "Optimal", cx: "O(N) time · O(1) space", idea: "<b>Find the middle</b> (first middle for even length), <b>cut</b> after it, <b>reverse the second half</b>, compare the halves node by node, then reverse back and reconnect so the input is unchanged.", code: "def middle(head):              # first middle\n    slow = fast = head\n    while fast.next and fast.next.next:\n        slow = slow.next\n        fast = fast.next.next\n    return slow\n\ndef reverse(head):\n    prev = None\n    while head:\n        nxt = head.next\n        head.next = prev\n        prev = head\n        head = nxt\n    return prev\n\ndef is_palindrome(head):\n    if head is None or head.next is None:\n        return True\n    mid = middle(head)\n    h2 = reverse(mid.next)     # reverse the second half\n    mid.next = None            # cut\n    t1, t2, ok = head, h2, True\n    while t2:\n        if t1.val != t2.val:\n            ok = False\n            break\n        t1 = t1.next\n        t2 = t2.next\n    mid.next = reverse(h2)     # restore the input\n    return ok" }
             ] },
           { t: "Reverse nodes in groups of K", d: "Hard", q: "Reverse every consecutive block of K nodes and return the new head.",
-            ex: "K = 3, 1..9\nAnswer: 3,2,1,6,5,4,9,8,7", edge: "last block shorter than K: the notes' code reverses it too; LeetCode 25 wants it left as is, so count K nodes ahead first. K = 1 → unchanged.", lc: "reverse-nodes-in-k-group",
+            ex: "K = 3, 1..9\nAnswer: 3,2,1,6,5,4,9,8,7", edge: "last block shorter than K: a simple version reverses it too; LeetCode 25 wants it left as is, so count K nodes ahead first. K = 1 → unchanged.", lc: "reverse-nodes-in-k-group",
             ap: [
               { n: "Brute force", cx: "O(N) time · O(N) space", idea: "Copy the values into an array, reverse each slice of K, and write the values back. Easy, but <b>O(N) extra memory</b> and it swaps values instead of nodes.", code: "def reverse_k_group(head, K):\n    vals = []\n    temp = head\n    while temp:\n        vals.append(temp.val)\n        temp = temp.next\n    for s in range(0, len(vals), K):\n        vals[s:s + K] = vals[s:s + K][::-1]\n    temp = head\n    for v in vals:\n        temp.val = v\n        temp = temp.next\n    return head" },
               { n: "Optimal", cx: "O(N) time · O(1) space", idea: "Use a <b>dummy node</b> and a <code>tail</code> pointer at the end of the finished part. For each block, run the normal reverse for K nodes (prev starts at null), then <b>tail.next = prev</b> to attach it, and walk tail to the block's last node (the block's old first node).", code: "def reverse_k_group(head, K):\n    dummy = Node(-1)\n    tail = dummy               # last node of the finished part\n    curr = head\n    while curr:\n        prev, i = None, 0\n        while i < K and curr:  # plain reversal of up to K nodes\n            temp = curr.next\n            curr.next = prev\n            prev = curr\n            curr = temp\n            i += 1\n        tail.next = prev       # attach the reversed block\n        while tail.next:       # walk to the block's last node\n            tail = tail.next\n    return dummy.next" }
             ] },
           { t: "Longest palindromic sub-list", d: "Hard", q: "Return the length of the longest run of consecutive nodes whose values form a palindrome. O(1) extra space.",
-            ex: "7,3,4,1,4,3,9\nAnswer: 5  (3,4,1,4,3)", edge: "<b>Correction to the notes:</b> they compute the even case before <code>curr.next = prev</code>, so the left side still runs forward. Flip curr first. The list ends up reversed; reverse it again if needed.",
+            ex: "7,3,4,1,4,3,9\nAnswer: 5  (3,4,1,4,3)", edge: "<b>Watch the order:</b> compute the even case only after <code>curr.next = prev</code>; otherwise the left side still runs forward. Flip curr first. The list ends up reversed; reverse it again if needed.",
             ap: [
               { n: "Brute force", cx: "O(N³) time · O(N) space", idea: "Copy to an array and test every sub-list for being a palindrome. N² sub-lists × O(N) per check is <b>far too slow</b>.", code: "def longest_pal_sublist(head):\n    a = []\n    while head:\n        a.append(head.val)\n        head = head.next\n    best = 0\n    for i in range(len(a)):\n        for j in range(i, len(a)):\n            sub = a[i:j + 1]\n            if sub == sub[::-1]:\n                best = max(best, j - i + 1)\n    return best" },
               { n: "Better", cx: "O(N²) time · O(N) space", idea: "Still on an array, <b>expand around each center</b> (a node for odd length, a gap for even length) while both sides match. O(N²), but the array still costs O(N) memory.", code: "def longest_pal_sublist(head):\n    a = []\n    while head:\n        a.append(head.val)\n        head = head.next\n\n    def expand(l, r):\n        while l >= 0 and r < len(a) and a[l] == a[r]:\n            l -= 1\n            r += 1\n        return r - l - 1\n\n    best = 0\n    for c in range(len(a)):\n        best = max(best, expand(c, c), expand(c, c + 1))\n    return best" },
@@ -344,7 +343,7 @@
         ["tip", "Which middle? <code>while fast.next and fast.next.next</code> gives the <b>first</b> middle for even length (needed for palindrome and merge sort, so a 2-node list splits 1 + 1). <code>while fast and fast.next</code> gives the <b>second</b> middle (what LeetCode 876 asks for)."],
         ["viz", "floydCycle", "Floyd's cycle detection: the hare gains one node per step on the tortoise inside the loop, so they must meet."],
         ["probs", [
-          { t: "Middle of a linked list", d: "Easy", q: "Return the middle node. For even length the notes return the first middle.",
+          { t: "Middle of a linked list", d: "Easy", q: "Return the middle node. For even length, return the first middle.",
             ex: "10,3,7,9,5,4,11 → 9\n10,3,7,9,5,4,11,16 → 9 (first middle)", viz: "middleList", lc: "middle-of-the-linked-list",
             ap: [
               { n: "Brute force", cx: "O(N) time · O(1) space (two passes)", idea: "Count the length L, then walk (L−1)/2 steps. Correct, but it needs <b>two passes</b>: about N + N/2 iterations.", code: "def middle(head):\n    n = 0\n    temp = head\n    while temp:\n        n += 1\n        temp = temp.next\n    temp = head\n    for _ in range((n - 1) // 2):    # first middle\n        temp = temp.next\n    return temp" },
@@ -377,7 +376,7 @@
           ["fast walked", "x + R2·l + y = 2 × slow", "fast is twice as fast"],
           ["subtract", "(R2 − 2·R1)·l = x + y", "let R3 = R2 − 2·R1"],
           ["so", "x = R3·l − y", "walking x steps from the meeting point lands on the loop start"]],
-          "From the meeting point, l − y steps reach the loop start; extra full laps don't change where you end. A pointer from head needs x steps to get there, and x = R3·l − y. So both pointers arrive together. (The notes also show slow makes 0 full laps before the meeting: R1 = 0.)"]
+          "From the meeting point, l − y steps reach the loop start; extra full laps don't change where you end. A pointer from head needs x steps to get there, and x = R3·l − y. So both pointers arrive together. (Slow also makes 0 full laps before the meeting: R1 = 0.)"]
       ] },
       { h: "Merging and sorting lists", blocks: [
         ["p", "Merging two sorted lists needs no extra array: you just re-link nodes. Keep a <code>tail</code> of the merged list, attach the smaller front node, and advance. When one list runs out, the other's remainder is already sorted and attaches with <b>one link</b>."],
@@ -424,9 +423,9 @@
           ["insert", "O(1)", "O(1)", "no order", "O(1)", "O(1)"],
           ["remove", "O(N)", "O(1)*", "no order", "O(N) (needs predecessor)", "<b>O(1)</b>"]]],
         ["p", "So: a <b>HashMap key → DLL node</b>, and a DLL ordered from least recent (just after head) to most recent (just before tail). <b>Sentinel</b> head and tail nodes mean insert and remove never see null."],
-        ["viz", "lin_lru", "The notes' capacity-4 trace: get(2) → 5, set(8,9) evicts 1, set(1,20) evicts 4, get(4) → −1."],
+        ["viz", "lin_lru", "Capacity-4 trace: get(2) → 5, set(8,9) evicts 1, set(1,20) evicts 4, get(4) → −1."],
         ["probs", [
-          { t: "LRU cache", d: "Medium", co: "Hard in notes", q: "Design get(key) and set(key, value) in O(1); evict the least recently used key when full.",
+          { t: "LRU cache", d: "Medium", co: "Often rated Hard", q: "Design get(key) and set(key, value) in O(1); evict the least recently used key when full.",
             ex: "cap 4: set(1,3) set(2,5) set(4,7) set(15,3)\nget(2) → 5; set(2,10); set(8,9) evicts 1\nset(1,20) evicts 4; get(2) → 10; get(4) → -1\n\ncap 2: set(1,10) set(5,12) get(5)→12 get(1)→10\nget(10)→-1 set(6,14) evicts 5, get(5)→-1", edge: "capacity 1; set on an existing key updates value and recency but not size", viz: "lin_lru", lc: "lru-cache",
             ap: [
               { n: "Brute force", cx: "O(capacity) per operation · O(capacity) space", idea: "Keep (key, value) pairs in a list ordered by recency, least recent first. Every get and set has to <b>search the list and shift it</b>: O(N) per operation.", code: "class LRUCache:\n    def __init__(self, capacity):\n        self.cap = capacity\n        self.items = []        # (key, val), least recent first\n\n    def get(self, key):\n        for i, (k, v) in enumerate(self.items):\n            if k == key:\n                self.items.append(self.items.pop(i))   # now most recent\n                return v\n        return -1\n\n    def put(self, key, val):\n        for i, (k, _) in enumerate(self.items):\n            if k == key:\n                self.items.pop(i)\n                break\n        else:\n            if len(self.items) == self.cap:\n                self.items.pop(0)                      # evict the LRU\n        self.items.append((key, val))" },
@@ -494,17 +493,16 @@
   /* ═════════ TOPIC: STACKS & QUEUES ═════════ */
   T["stacks-queues"] = {
     name: "Stacks & queues", icon: "🥞", color: "#c2410c", minutes: 90,
-    notes: "stack1.pdf, stack2.pdf, queue1.pdf",
     summary: "A stack hands back the newest item first (LIFO); a queue hands back the oldest (FIFO). Brackets, expressions, 'nearest greater/smaller' and window maximums all reduce to one of them.",
     sections: [
       { h: "Stacks: last in, first out", blocks: [
-        ["analogy", "A pile of plates: you add to the top and take from the top. The function call stack and browser history work the same way. Visit Google → Scaler → LeetCode → YouTube → FB, then press Back three times: each Back pops from the history stack s1 and pushes onto a forward stack s2, leaving s1 = [Google, Scaler] and s2 = [FB, YouTube, LeetCode]."],
+        ["analogy", "A pile of plates: you add to the top and take from the top. The function call stack and browser history work the same way. Visit Google → Wikipedia → LeetCode → YouTube → FB, then press Back three times: each Back pops from the history stack s1 and pushes onto a forward stack s2, leaving s1 = [Google, Wikipedia] and s2 = [FB, YouTube, LeetCode]."],
         ["table", ["Operation", "Meaning", "Cost"], [
           ["push(x)", "put x on top", "O(1)"],
           ["pop()", "remove the top", "O(1)"],
           ["top() / peek()", "read the top without removing it", "O(1)"],
           ["isEmpty()", "is there anything left?", "O(1)"]]],
-        ["p", "Notes trace: push 2, 3, 18, 5 → pop gives 5 → peek gives 18 → push 10 → pops give 10, 18, 3, 2 → isEmpty is true."],
+        ["p", "Trace: push 2, 3, 18, 5 → pop gives 5 → peek gives 18 → push 10 → pops give 10, 18, 3, 2 → isEmpty is true."],
         ["p", "<b>Array version.</b> Keep <code>tos</code> (top-of-stack index), starting at −1. push does <code>tos++; arr[tos] = x</code> (overflow if tos == cap−1, or grow a dynamic array). pop does <code>tos--</code> after checking for empty. <b>Linked-list version.</b> Push and pop at the <b>head</b>: both are O(1). Using the tail makes pop O(N) on a singly linked list, and pushing at one end while popping from the other gives FIFO, which is a queue, not a stack."],
         ["probs", [
           { t: "Min stack", d: "Medium", q: "A stack that also returns its minimum in O(1).",
@@ -586,20 +584,20 @@
       ] },
       { h: "Histogram area and contribution counting", blocks: [
         ["p", "In the largest rectangle, <b>some bar is the shortest</b>. If bar i is the shortest, the rectangle stretches left until just after the nearest smaller bar (index nsl[i]) and right until just before the nearest smaller bar on the right (nsr[i]). So the width is <code>nsr[i] − nsl[i] − 1</code>, with −1 and N as the defaults."],
-        ["viz", "lin_histogram", "Pass 1 builds nsl, pass 2 builds nsr, pass 3 tries every bar as the height. Try the notes' 20-bar preset."],
+        ["viz", "lin_histogram", "Pass 1 builds nsl, pass 2 builds nsr, pass 3 tries every bar as the height. Try the 20-bar preset."],
         ["probs", [
           { t: "Largest rectangle in a histogram", d: "Hard", q: "Bars of width 1 and heights arr[i]: find the largest rectangle area.",
-            ex: "[2,1,5,6,2,3] → 10\nNotes, 20 bars: 2,1,4,7,5,2,1,3,4,5,6,4,3,2,3,1,5,6,4,2\nnsl = [-1,-1,1,2,2,1,-1,6,7,8,9,7,6,6,13,-1,15,16,15,15]\nnsr = [1,20,5,4,5,6,20,13,12,11,11,12,13,15,15,20,18,18,19,20]", edge: "In the notes' 20-bar example, the highlighted height-3 rectangle over bars 7–12 (area 18) is the best with height ≥ 2. The overall answer is <b>20</b>: the height-1 bars span all 20 columns. Also: all equal heights → h × N; one bar; use long for big areas.", viz: "lin_histogram", lc: "largest-rectangle-in-histogram",
+            ex: "[2,1,5,6,2,3] → 10\n20 bars: 2,1,4,7,5,2,1,3,4,5,6,4,3,2,3,1,5,6,4,2\nnsl = [-1,-1,1,2,2,1,-1,6,7,8,9,7,6,6,13,-1,15,16,15,15]\nnsr = [1,20,5,4,5,6,20,13,12,11,11,12,13,15,15,20,18,18,19,20]", edge: "In the 20-bar example, the highlighted height-3 rectangle over bars 7–12 (area 18) is the best with height ≥ 2. The overall answer is <b>20</b>: the height-1 bars span all 20 columns. Also: all equal heights → h × N; one bar; use long for big areas.", viz: "lin_histogram", lc: "largest-rectangle-in-histogram",
             ap: [
               { n: "Brute force", cx: "O(N²) time · O(1) space", idea: "Treat every bar as the shortest bar of its rectangle and <b>walk left and right</b> while neighbours are at least as tall. Each walk can be O(N).", code: "def largest_rectangle(h):\n    n, best = len(h), 0\n    for i in range(n):\n        l = i\n        while l > 0 and h[l - 1] >= h[i]:\n            l -= 1\n        r = i\n        while r < n - 1 and h[r + 1] >= h[i]:\n            r += 1\n        best = max(best, h[i] * (r - l + 1))\n    return best" },
-              { n: "Better", cx: "O(N) time · O(N) space (three passes)", idea: "The notes' method: build <b>index</b> arrays nsl and nsr with monotonic stacks (defaults −1 and N), then <b>area = h[i] × (nsr[i] − nsl[i] − 1)</b> and take the max. This is exactly what the animation shows.", code: "def largest_rectangle(h):\n    n = len(h)\n    nsl, nsr = [-1] * n, [n] * n\n    st = []\n    for i in range(n):              # nearest smaller on the left\n        while st and h[st[-1]] >= h[i]:\n            st.pop()\n        nsl[i] = st[-1] if st else -1\n        st.append(i)\n    st = []\n    for i in range(n - 1, -1, -1):  # nearest smaller on the right\n        while st and h[st[-1]] >= h[i]:\n            st.pop()\n        nsr[i] = st[-1] if st else n\n        st.append(i)\n    best = 0\n    for i in range(n):\n        best = max(best, h[i] * (nsr[i] - nsl[i] - 1))\n    return best" },
+              { n: "Better", cx: "O(N) time · O(N) space (three passes)", idea: "Build <b>index</b> arrays nsl and nsr with monotonic stacks (defaults −1 and N), then <b>area = h[i] × (nsr[i] − nsl[i] − 1)</b> and take the max. This is exactly what the animation shows.", code: "def largest_rectangle(h):\n    n = len(h)\n    nsl, nsr = [-1] * n, [n] * n\n    st = []\n    for i in range(n):              # nearest smaller on the left\n        while st and h[st[-1]] >= h[i]:\n            st.pop()\n        nsl[i] = st[-1] if st else -1\n        st.append(i)\n    st = []\n    for i in range(n - 1, -1, -1):  # nearest smaller on the right\n        while st and h[st[-1]] >= h[i]:\n            st.pop()\n        nsr[i] = st[-1] if st else n\n        st.append(i)\n    best = 0\n    for i in range(n):\n        best = max(best, h[i] * (nsr[i] - nsl[i] - 1))\n    return best" },
               { n: "Optimal", cx: "O(N) time · O(N) space (one pass)", idea: "Do it in one pass: when bar i <b>pops</b> bar top, i is top's nearest smaller on the right and the new stack top is its nearest smaller on the left, so its area is known right then. A sentinel height 0 at the end flushes the stack.", code: "def largest_rectangle(h):\n    st, best = [], 0                # indices, heights increasing\n    for i in range(len(h) + 1):\n        cur = h[i] if i < len(h) else 0   # 0 flushes the stack\n        while st and h[st[-1]] >= cur:\n            top = st.pop()\n            left = st[-1] if st else -1   # nsl of top; i is its nsr\n            best = max(best, h[top] * (i - left - 1))\n        st.append(i)\n    return best" }
             ] },
           { t: "Maximal rectangle in a binary matrix", d: "Hard", q: "Largest rectangle containing only 1s in a 0/1 matrix.",
             ex: "Rows: 10100 / 10111 / 11111 / 10010\nAnswer: 6", lc: "maximal-rectangle",
             ap: [
               { n: "Brute force", cx: "O(R²·C) time · O(C) space", idea: "Fix a top row and grow the bottom row; track which columns are all 1s between them, and the longest run of such columns gives the width. <b>Every pair of rows</b> is tried.", code: "def maximal_rectangle(M):\n    if not M:\n        return 0\n    R, C = len(M), len(M[0])\n    best = 0\n    for top in range(R):\n        ok = [True] * C             # column all 1s from top to bottom?\n        for bottom in range(top, R):\n            run = 0\n            for c in range(C):\n                ok[c] = ok[c] and M[bottom][c] == '1'\n                run = run + 1 if ok[c] else 0\n                best = max(best, run * (bottom - top + 1))\n    return best" },
-              { n: "Optimal", cx: "O(R·C) time · O(C) space", idea: "Treat each row as the floor of a <b>histogram</b>: <code>height[c] += 1</code> if the cell is 1, else reset to 0. Run the largest-rectangle solution on every row. (The notes sketch this with a running heights array like [0,3,2,1,0].)", code: "def maximal_rectangle(M):\n    if not M:\n        return 0\n    C = len(M[0])\n    heights = [0] * C\n    best = 0\n    for row in M:\n        for c in range(C):\n            heights[c] = heights[c] + 1 if row[c] == '1' else 0\n        best = max(best, largest_rectangle(heights))   # histogram problem\n    return best" }
+              { n: "Optimal", cx: "O(R·C) time · O(C) space", idea: "Treat each row as the floor of a <b>histogram</b>: <code>height[c] += 1</code> if the cell is 1, else reset to 0. Run the largest-rectangle solution on every row. (Picture it as a running heights array like [0,3,2,1,0].)", code: "def maximal_rectangle(M):\n    if not M:\n        return 0\n    C = len(M[0])\n    heights = [0] * C\n    best = 0\n    for row in M:\n        for c in range(C):\n            heights[c] = heights[c] + 1 if row[c] == '1' else 0\n        best = max(best, largest_rectangle(heights))   # histogram problem\n    return best" }
             ] },
           { t: "Sum of (max − min) over all subarrays", d: "Hard", q: "Add up max − min for every subarray. N ≤ 10^5.",
             ex: "[2,5,3]: [2]→0 [2,5]→3 [2,5,3]→3 [5]→0 [5,3]→2 [3]→0\nAnswer: 8", edge: "<b>Duplicates:</b> break ties on one side only, or a subarray is counted once per copy. ngl pops smaller AND equal; ngr pops only strictly smaller; nsl pops greater AND equal; nsr pops only strictly greater. Use 64-bit sums (and a modulus if asked).", lc: "sum-of-subarray-ranges",
@@ -612,8 +610,8 @@
       ] },
       { h: "Queues and circular queues", blocks: [
         ["analogy", "A ticket counter: people join at the back (rear) and are served from the front. Printers, call centres and message queues work the same way. First in, first out."],
-        ["p", "Operations: <code>enqueue(x)</code> at the rear, <code>dequeue()</code> from the front, <code>front()</code>, <code>isEmpty()</code>, all O(1). In the notes' array version, <code>front</code> is the index of the element removed most recently and <code>rear</code> the index added most recently, both starting at −1. Trace: Eq 3, Eq 7, Eq 12, Dq, Dq, Eq 8, Eq 3 → front() = 12 with the array [3,7,12,8,3]."],
-        ["warn", "In the linear version the slots before <code>front</code> are wasted forever. Wrap around with <code>% N</code> to make a <b>circular queue</b>, but then <code>front == rear</code> could mean empty or full. The notes fix this with a separate <b>size</b> counter."],
+        ["p", "Operations: <code>enqueue(x)</code> at the rear, <code>dequeue()</code> from the front, <code>front()</code>, <code>isEmpty()</code>, all O(1). In the array version, <code>front</code> is the index of the element removed most recently and <code>rear</code> the index added most recently, both starting at −1. Trace: Eq 3, Eq 7, Eq 12, Dq, Dq, Eq 8, Eq 3 → front() = 12 with the array [3,7,12,8,3]."],
+        ["warn", "In the linear version the slots before <code>front</code> are wasted forever. Wrap around with <code>% N</code> to make a <b>circular queue</b>, but then <code>front == rear</code> could mean empty or full. A separate <b>size</b> counter fixes this."],
         ["code", "class CircularQueue:\n    def __init__(self, cap):\n        self.N = cap\n        self.arr = [0] * cap\n        self.front = -1        # index removed most recently\n        self.rear = -1         # index added most recently\n        self.size = 0          # tells empty from full\n\n    def enqueue(self, x):\n        if self.size == self.N:\n            return 'full'\n        self.rear = (self.rear + 1) % self.N    # wrap around\n        self.arr[self.rear] = x\n        self.size += 1\n\n    def dequeue(self):\n        if self.size == 0:\n            return -1\n        self.front = (self.front + 1) % self.N\n        self.size -= 1\n        return self.arr[self.front]\n\n    def get_front(self):\n        if self.size == 0:\n            return -1\n        return self.arr[(self.front + 1) % self.N]"],
         ["viz", "lin_twoStackQueue", "Pouring IN into OUT reverses the order once, which turns LIFO into FIFO."],
         ["probs", [
@@ -695,7 +693,7 @@
       { q: "Why is the monotonic stack O(N) even though there is a while loop inside the for loop?", o: ["The while loop runs at most once", "Each index is pushed once and popped at most once, so all pops total ≤ N", "The input is sorted", "It isn't; it's O(N²)"], a: 1, why: "Amortized counting: the total work of all pops over the whole scan is bounded by the number of pushes." },
       { q: "Largest rectangle: bar i with nsl[i] = 1 and nsr[i] = 6. How wide is its rectangle?", o: ["5", "4", "6", "7"], a: 1, why: "Width = nsr − nsl − 1 = 6 − 1 − 1 = 4 (indices 2..5)." },
       { q: "Queue via two stacks: why is dequeue O(1) amortized?", o: ["Every dequeue pours the stacks", "Each element is moved from IN to OUT at most once over its lifetime", "Stacks are faster than queues", "Because OUT is never empty"], a: 1, why: "An element is pushed, moved once and popped once: about 3 operations per element in total, however the calls are ordered." },
-      { q: "Circular queue with front == rear. How do the notes tell empty from full?", o: ["They can't", "A separate size counter", "Check arr[front] == null", "Always leave the array half empty"], a: 1, why: "With wrap-around both states look the same, so a size counter (or one wasted slot) disambiguates." },
+      { q: "Circular queue with front == rear. How do you tell empty from full?", o: ["They can't", "A separate size counter", "Check arr[front] == null", "Always leave the array half empty"], a: 1, why: "With wrap-around both states look the same, so a size counter (or one wasted slot) disambiguates." },
       { q: "In sliding window maximum, what does the deque store and in what order?", o: ["Values in increasing order", "Indices whose values decrease from front to back", "All indices of the window", "The K largest values in a heap"], a: 1, why: "Indices let you detect expiry; decreasing values make the front the maximum." }
     ]
   };
@@ -703,7 +701,6 @@
   /* ═════════ TOPIC: HEAPS ═════════ */
   T["heaps"] = {
     name: "Heaps & priority queues", icon: "⛰️", color: "#7c3aed", minutes: 75,
-    notes: "heap1.pdf, heap2.pdf",
     summary: "A complete binary tree stored in an array where every parent beats its children. You get the min (or max) in O(1) and insert or remove in O(log N), which is exactly what 'repeatedly take the smallest' problems need.",
     sections: [
       { h: "Why heaps: connecting the ropes", blocks: [
@@ -730,7 +727,7 @@
       ] },
       { h: "What a heap is", blocks: [
         ["p", "A heap is a binary tree with two properties. <b>1. Complete binary tree:</b> every level is full except possibly the last, which fills left to right. <b>2. Heap order:</b> in a min-heap every node is ≤ its children, so the root is the minimum; in a max-heap every node is ≥ its children. getMin (or getMax) is O(1)."],
-        ["p", "Notes examples: a min-heap with root 5, children 12 and 20, then 25, 13, 24, 22, then 35, 34. A max-heap with root 58, children 39 and 26, then 34, 12, 3, 9, then 16, 1."],
+        ["p", "Examples: a min-heap with root 5, children 12 and 20, then 25, 13, 24, 22, then 35, 34. A max-heap with root 58, children 39 and 26, then 34, 12, 3, 9, then 16, 1."],
         ["table", ["For index i (0-based)", "Formula"], [
           ["left child", "2i + 1"],
           ["right child", "2i + 2"],
@@ -742,11 +739,11 @@
       ] },
       { h: "Insert, extract and heapify", blocks: [
         ["steps", [
-          ["Insert (sift up)", "Append x at the end. While it is smaller than its parent (min-heap), swap upward. Notes: insert −1 into [3,5,20,12,10,24,22,35,25,13]: −1 swaps with 10, then 5, then 3, and becomes the root."],
+          ["Insert (sift up)", "Append x at the end. While it is smaller than its parent (min-heap), swap upward. Example: insert −1 into [3,5,20,12,10,24,22,35,25,13]: −1 swaps with 10, then 5, then 3, and becomes the root."],
           ["Extract-min", "Swap the root with the last element, remove the last slot (that is the answer), then sift the new root down."],
           ["Sift down (heapify)", "Pick the smallest of the node and its children. If the node is smallest, stop. Otherwise swap with that child and continue there."]]],
         ["code", "def insert(h, x):                # sift up\n    h.append(x)\n    i = len(h) - 1\n    while i > 0 and h[(i - 1) // 2] > h[i]:\n        p = (i - 1) // 2\n        h[p], h[i] = h[i], h[p]\n        i = p\n\ndef heapify(h, i, n):            # sift down within h[0..n-1]\n    while 2 * i + 1 < n:\n        l, r, m = 2 * i + 1, 2 * i + 2, i\n        if h[l] < h[m]:\n            m = l\n        if r < n and h[r] < h[m]:   # check r < n first!\n            m = r\n        if m == i:\n            break\n        h[i], h[m] = h[m], h[i]\n        i = m\n\ndef extract_min(h):\n    h[0], h[-1] = h[-1], h[0]\n    ans = h.pop()\n    heapify(h, 0, len(h))\n    return ans"],
-        ["warn", "<b>Correction to the notes:</b> their heapify reads <code>heap[2i+2]</code> whenever the left child exists. When the left child is the last element there is no right child, so check <code>2i+2 &lt; size</code> before using it."],
+        ["warn", "<b>Check the right child:</b> do not read <code>heap[2i+2]</code> just because the left child exists. When the left child is the last element there is no right child, so check <code>2i+2 &lt; size</code> before using it."],
         ["tip", "Both operations walk one root-to-leaf path, so they cost O(height) = <b>O(log N)</b>. Peek is O(1)."]
       ] },
       { h: "Build a heap in O(N)", blocks: [
@@ -776,7 +773,7 @@
         ]]
       ] },
       { h: "Heap applications: k-th largest, nearly sorted, median, merge K", blocks: [
-        ["tip", "Rule of thumb from the notes: <b>if you need to sort, or find the min or max, again and again, think heap.</b>"],
+        ["tip", "Rule of thumb: <b>if you need to sort, or find the min or max, again and again, think heap.</b>"],
         ["analogy", "Team selection for the k-th largest. Keep a team of the K best players in a min-heap. The root is the weakest member. A new player joins only if they beat the weakest, who is kicked out. At the end the weakest member is the K-th best overall."],
         ["probs", [
           { t: "K-th largest element", d: "Medium", q: "Return the K-th largest element of an array (duplicates count separately).",
@@ -859,7 +856,7 @@
       { q: "Why is bottom-up build-heap O(N), not O(N log N)?", o: ["It skips half the elements", "Most nodes are near the bottom and sift down only a little: N/4·1 + N/8·2 + … ≈ N", "It uses a sorting network", "It isn't; it's O(N log N)"], a: 1, why: "The work is the sum of node heights, and that series adds up to about N." },
       { q: "To find the K-th largest of a huge stream, which heap do you keep?", o: ["A max-heap of everything", "A min-heap of size K", "A max-heap of size K", "Two heaps"], a: 1, why: "The min-heap of the K largest so far has the K-th largest at its root; anything smaller than the root is ignored." },
       { q: "Median of a stream: h1 (max-heap) has 3 elements with top 6, h2 (min-heap) has 3 with top 8. What is the median?", o: ["6", "7", "8", "Not enough information"], a: 1, why: "Equal sizes mean an even count, so average the two tops: (6 + 8) / 2 = 7." },
-      { q: "Is heap sort stable?", o: ["Yes", "No: swapping the root to the end can reorder equal keys", "Only for min-heaps", "Only if the array is small"], a: 1, why: "Long-distance swaps move equal elements past each other, as in the notes' green/red 2 example." },
+      { q: "Is heap sort stable?", o: ["Yes", "No: swapping the root to the end can reorder equal keys", "Only for min-heaps", "Only if the array is small"], a: 1, why: "Long-distance swaps move equal elements past each other, as in the green/red 2 example." },
       { q: "Connecting ropes [2,5,2,6,3]: what is the minimum cost?", o: ["49", "41", "40", "18"], a: 2, why: "Always join the two smallest: 4 + 7 + 11 + 18 = 40. Sorting once (41) is not enough because merged ropes re-enter the pool." }
     ]
   };
@@ -867,13 +864,12 @@
   /* ═════════ TOPIC: TRIES ═════════ */
   T["tries"] = {
     name: "Tries (prefix trees)", icon: "🌲", color: "#0369a1", minutes: 55,
-    notes: "trie1.pdf, trie2.pdf",
     summary: "A tree where each edge is a character, so words with a common prefix share a path. Lookups cost O(word length) no matter how many words you store, and a binary version over bits solves maximum-XOR problems.",
     sections: [
       { h: "Why tries", blocks: [
         ["p", "A spellchecker checks words against a dictionary of N valid words. A HashSet lookup already costs O(L) per word (hashing plus comparing characters). A <b>trie</b> also costs O(L), but it also answers <b>prefix</b> questions (autocomplete, 'any word starting with tri?', shortest unique prefix) that a hash set can't."],
         ["analogy", "A phone's contact search. Type 'p', then 'l', then 'a': each letter moves you one level down a tree, and everything below you starts with what you have typed."],
-        ["p", "Notes dictionary: try, trim, trie, play, trying, plate, car, par, trimmer, pla. The root has children c, t and p. 'try' and 'trying' share t → r → y. 'plate', 'play' and 'pla' share p → l → a."],
+        ["p", "Example dictionary: try, trim, trie, play, trying, plate, car, par, trimmer, pla. The root has children c, t and p. 'try' and 'trying' share t → r → y. 'plate', 'play' and 'pla' share p → l → a."],
         ["code", "class Node:\n    def __init__(self, ch=''):\n        self.val = ch\n        self.children = [None] * 26     # slot k is for chr(ord('a') + k)\n        self.eow = False                # end of word"],
         ["warn", "Without the <b>end-of-word (eow) flag</b>, search('tri') would succeed just because the path t → r → i exists for 'trie'. Mark eow on the last node of every inserted word. search('trie') → true, search('trim') → true, search('tri') → false, search('pla') → true."],
         ["viz", "trie", "Shared prefixes reuse nodes. Words ending at a node are marked ✓."]
@@ -892,7 +888,7 @@
               { n: "Optimal", cx: "O(L) time · O(1) space", idea: "Walk the trie one character at a time. A missing child means false. At the end, <b>search returns eow</b> (the path alone doesn't make a word); startsWith returns true.", code: "def walk(root, s):\n    curr = root\n    for ch in s:\n        curr = curr.children[ord(ch) - ord('a')]\n        if curr is None:\n            return None\n    return curr\n\ndef search(root, w):\n    node = walk(root, w)\n    return node is not None and node.eow\n\ndef starts_with(root, p):\n    return walk(root, p) is not None" }
             ] },
           { t: "Trie delete", d: "Medium", q: "Remove a word, freeing every node that no other word uses.",
-            ex: "Trie: cat, car, plate, play, try, trie, trim, trimmer, trying\ndelete 'trying' (after 'try' is gone): cut the link r → y\ndelete 'trimmer': cut below the m of 'trim' (that m is an eow)", edge: "<b>Corrections to the notes:</b> the final line must be an assignment (<code>= NULL</code>, not <code>== NULL</code>). A word that isn't present (missing child or eow false) must leave the trie unchanged.",
+            ex: "Trie: cat, car, plate, play, try, trie, trim, trimmer, trying\ndelete 'trying' (after 'try' is gone): cut the link r → y\ndelete 'trimmer': cut below the m of 'trim' (that m is an eow)", edge: "<b>Watch out:</b> the final line must be an assignment (<code>= NULL</code>, not <code>== NULL</code>). A word that isn't present (missing child or eow false) must leave the trie unchanged.",
             ap: [
               { n: "Brute force", cx: "O(total characters) time · O(total characters) space", idea: "Keep the word list, remove the word from it, and <b>rebuild the whole trie</b>. Correct, but touches every stored character.", code: "def delete(words, word):\n    words.discard(word)\n    root = Node()\n    for w in words:\n        insert(root, w)\n    return root" },
               { n: "Better", cx: "O(L) time · O(L) recursion stack", idea: "Recurse down the word; on the way back, delete a child if it is now <b>not an eow and has no children</b>. Correct, but easy to get the return values wrong.", code: "def delete(node, word, d=0):\n    # returns True if node can be removed by its parent\n    if d == len(word):\n        if not node.eow:\n            return False          # word not present\n        node.eow = False\n    else:\n        i = ord(word[d]) - ord('a')\n        child = node.children[i]\n        if child is None:\n            return False          # word not present\n        if delete(child, word, d + 1):\n            node.children[i] = None\n    return not node.eow and all(c is None for c in node.children)" },
@@ -913,7 +909,7 @@
             ex: "[tri, trap, plate, cat, part, place, tie]\nAnswer: [tri, tra, plat, c, pa, plac, ti]\nplace: p(3) → l(2) → a(2) → c(1) → 'plac'", edge: "one word → its first letter; duplicate words break the assumption (frequency never reaches 1)",
             ap: [
               { n: "Brute force", cx: "O(N²·L²) time · O(1) extra space", idea: "For each word try prefix lengths 1, 2, … and <b>check every other word</b> for that prefix.", code: "def shortest_prefixes(words):\n    ans = []\n    for w in words:\n        for k in range(1, len(w) + 1):\n            p = w[:k]\n            if not any(o.startswith(p) for o in words if o is not w):\n                break\n        ans.append(p)\n    return ans" },
-              { n: "Optimal", cx: "O(total characters) time · O(total characters × 26) space", idea: "Store a <b>frequency</b> on every node: how many words pass through it. Then walk each word until the <b>first node with frequency 1</b>; that prefix belongs to this word alone. (The notes' other idea: stop one character after the last branching node.)", code: "class Node:\n    def __init__(self):\n        self.children = [None] * 26\n        self.freq = 0             # words passing through this node\n\ndef insert(root, w):\n    curr = root\n    for ch in w:\n        i = ord(ch) - 97\n        if curr.children[i] is None:\n            curr.children[i] = Node()\n        curr = curr.children[i]\n        curr.freq += 1\n\ndef shortest(root, w):\n    curr, p = root, ''\n    for ch in w:\n        curr = curr.children[ord(ch) - 97]\n        p += ch\n        if curr.freq == 1:        # only this word goes here\n            return p\n    return p\n\ndef shortest_prefixes(words):\n    root = Node()\n    for w in words:\n        insert(root, w)\n    return [shortest(root, w) for w in words]" }
+              { n: "Optimal", cx: "O(total characters) time · O(total characters × 26) space", idea: "Store a <b>frequency</b> on every node: how many words pass through it. Then walk each word until the <b>first node with frequency 1</b>; that prefix belongs to this word alone. (Another idea: stop one character after the last branching node.)", code: "class Node:\n    def __init__(self):\n        self.children = [None] * 26\n        self.freq = 0             # words passing through this node\n\ndef insert(root, w):\n    curr = root\n    for ch in w:\n        i = ord(ch) - 97\n        if curr.children[i] is None:\n            curr.children[i] = Node()\n        curr = curr.children[i]\n        curr.freq += 1\n\ndef shortest(root, w):\n    curr, p = root, ''\n    for ch in w:\n        curr = curr.children[ord(ch) - 97]\n        p += ch\n        if curr.freq == 1:        # only this word goes here\n            return p\n    return p\n\ndef shortest_prefixes(words):\n    root = Node()\n    for w in words:\n        insert(root, w)\n    return [shortest(root, w) for w in words]" }
             ] },
           { t: "Search suggestions system", d: "Medium", q: "After each typed character, return up to 3 lexicographically smallest products with that prefix.",
             ex: "products [mobile, mouse, moneypot, monitor, mousepad], type 'mouse'\n'm' → [mobile, moneypot, monitor] … 'mou' → [mouse, mousepad]", lc: "search-suggestions-system",
@@ -926,8 +922,8 @@
       ] },
       { h: "Binary tries and maximum XOR", blocks: [
         ["p", "A <b>binary trie</b> stores numbers as fixed-width bit strings from the most significant bit (MSB) down. Each node has at most two children: 0 and 1. The height is the number of bits L (find it with <code>while max: max >>= 1; L += 1</code>). Example: 3, 6, 4, 12 are 0011, 0110, 0100, 1100."],
-        ["tip", "<b>The MSB matters most.</b> 2^i is larger than 2^0 + 2^1 + … + 2^(i−1). Notes: 1011101 ^ 1100010 = 0111111 = 63, but 1011101 ^ 0011101 = 1000000 = 64. One high bit beats every lower bit combined. So, going from the MSB down, greedily make each XOR bit 1."],
-        ["p", "<b>Demand bits.</b> For x, the ideal partner is ~x (every bit flipped). Walk the trie: at bit j, if x has bit b, take child 1−b if it exists (that XOR bit becomes 1), otherwise take child b. Notes: 5 = 00101 demands 11010 and gets 11100 = 28; 20 = 10100 demands 01011 and gets 11110 = 30."],
+        ["tip", "<b>The MSB matters most.</b> 2^i is larger than 2^0 + 2^1 + … + 2^(i−1). Example: 1011101 ^ 1100010 = 0111111 = 63, but 1011101 ^ 0011101 = 1000000 = 64. One high bit beats every lower bit combined. So, going from the MSB down, greedily make each XOR bit 1."],
+        ["p", "<b>Demand bits.</b> For x, the ideal partner is ~x (every bit flipped). Walk the trie: at bit j, if x has bit b, take child 1−b if it exists (that XOR bit becomes 1), otherwise take child b. Example: 5 = 00101 demands 11010 and gets 11100 = 28; 20 = 10100 demands 01011 and gets 11110 = 30."],
         ["viz", "lin_maxXor", "Each query follows the demanded bit when it can (✓) and falls back when it can't (✗)."],
         ["probs", [
           { t: "Maximum XOR of a pair", d: "Medium", q: "Find the maximum A[i] ^ A[j].",

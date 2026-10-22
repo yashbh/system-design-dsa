@@ -5,7 +5,6 @@ BP.LESSONS.push({
   icon: "🔎",
   minutes: 20,
   title: "Case study: search typeahead (Google, Amazon)",
-  scaler: "HLD 9 · Case Study: Typeahead",
   summary: "Design Google-scale autocomplete from scratch: requirements, the scale math, tries vs hashmaps, taming a flood of writes with buffering and sampling, sharding by prefix, and letting old searches fade.",
   concepts: ["trie","sharding","consistent-hashing","caching"],
   related: [],
@@ -13,7 +12,7 @@ BP.LESSONS.push({
     { h: "Three letters and it reads your mind", blocks: [
       ["p","Open Google and type “mic”. Before your finger leaves the key, a little box drops down: <i>microsoft</i>, <i>michael jordan</i>, <i>microwave</i>. Type an “h” and the list changes again. It feels like nothing. It's one of the busiest services on the planet."],
       ["p","That drop-down is called <b>typeahead</b>, or autocomplete. Amazon has it on its search bar, Spotify has it, your IDE has it. It looks like a tiny feature, but at Google's size it has to answer tens of billions of requests a day, each one in less time than it takes you to press the next key."],
-      ["p","The notes frame it as a story: the CEO walks over to you, the architect, and says “build typeahead for us, at Google scale”. That's what we'll do in this lesson, end to end, the way you would in a system design interview."],
+      ["p","Picture it as a story: the CEO walks over to you, the architect, and says “build typeahead for us, at Google scale”. That's what we'll do in this lesson, end to end, the way you would in a system design interview."],
       ["p","Along the way you'll meet a data structure (the trie), a classic sharding problem (hot prefixes), a neat trick for surviving a flood of writes (don't record most of them), and a gentle bit of maths for making yesterday's news fade away."]
     ] },
     { h: "A recipe for any design interview", blocks: [
@@ -22,9 +21,9 @@ BP.LESSONS.push({
       ["tip","Every case study in this module follows the same five steps. Practise saying them out loud. Interviewers love a candidate who brings structure to a vague question, and it stops you from drawing boxes before you know what they're for."]
     ] },
     { h: "Step 1: pin down what it must do", blocks: [
-      ["p","“Build typeahead” could mean a dozen different products. So we ask questions. Here are the answers the notes settle on."],
+      ["p","“Build typeahead” could mean a dozen different products. So we ask questions. Here are the answers we settle on."],
       ["list",["<b>How many suggestions?</b> 5.","<b>How are they ranked?</b> By popularity. In general popularity mixes how often something is searched with how recently. For the MVP, it's just the raw search count.","<b>What counts as a match?</b> Strict <b>prefix</b> match only. “mic” matches “microsoft”, not “atomic”.","<b>Personalisation?</b> Out of scope for the MVP. Confirm this in a real interview; it changes the design a lot.","<b>Spelling correction?</b> Not supported. No special characters either.","<b>When do suggestions start?</b> After <b>3 characters</b>."]],
-      ["p","The notes make one point sharply: the MVP is about <i>what</i> the system does. Latency, availability and the like belong in design goals, step 3. Keep them separate and your answer stays organised."],
+      ["p","One point matters a lot: the MVP is about <i>what</i> the system does. Latency, availability and the like belong in design goals, step 3. Keep them separate and your answer stays organised."],
       ["p","There's also a teaser to keep in your back pocket. “Roger Binny” has 1 million searches over 5 years, about 1,000 a day. “Roger Federer” won Wimbledon yesterday and has had 10,000 searches since. If you type “roger”, who should come first? Federer, obviously. But by raw count Binny wins 1,000,000 to 10,000. So raw frequency isn't enough. We'll fix that at the end."],
       ["img","Keyboard Closeup 02 (203533165).jpeg","A fast typist hits a key every 100–200 ms. Suggestions that arrive after the next keystroke are already out of date."]
     ] },
@@ -36,7 +35,7 @@ BP.LESSONS.push({
     ] },
     { h: "Read-heavy, write-heavy or both?", blocks: [
       ["p","This question matters more than it looks. Writes in most databases take locks on the rows they change, and while a row is locked, reads of that row wait. So a system with lots of both reads and writes has them constantly fighting."],
-      ["p","Here the ratio is <b>1 write for every 6 reads</b>: 10 billion writes and 60 billion reads a day. Is that read-heavy? The notes say no. A system only counts as read-heavy when reads outnumber writes by an order of magnitude or more, so that writes are a rounding error. One in six is not a rounding error."],
+      ["p","Here the ratio is <b>1 write for every 6 reads</b>: 10 billion writes and 60 billion reads a day. Is that read-heavy? No. A system only counts as read-heavy when reads outnumber writes by an order of magnitude or more, so that writes are a rounding error. One in six is not a rounding error."],
       ["p","So typeahead is <b>both read- and write-heavy</b>. That's the most interesting finding of the estimate, and it shapes the whole design. A heavy-on-both system has to absorb one side somewhere: cache the reads, or buffer and thin out the writes. Hold that thought."],
       ["warn","A common interview slip is to say “search is read-heavy” and move on. The count updates make typeahead write-heavy too. Spotting that early is what gets you to the clever part of the design."]
     ] },
@@ -63,7 +62,7 @@ BP.LESSONS.push({
       ["warn","The practical problem: no off-the-shelf database stores tries. You'd have to build, shard, replicate and operate your own custom storage engine. That's a lot of engineering for one feature."]
     ] },
     { h: "The hashmap version (what you'd ship)", blocks: [
-      ["p","The notes call this the more practical approach. Flatten the trie into two key–value tables, which any key–value store can hold."],
+      ["p","This is the more practical approach. Flatten the trie into two key–value tables, which any key–value store can hold."],
       ["table",["Table","Key","Value"],[["frequency","search term","its count, e.g. “michael jordan” → 48,210"],["top5","every prefix","its top-5 list, e.g. “mic” → [microsoft, michael jordan, …]"]]],
       ["p","<b>Read:</b> <code>getSuggestions(\"mich\")</code> is a single lookup of the key “mich” in the top5 table. A key–value store already shards by key using consistent hashing, so the client goes straight to the shard that owns “mich”."],
       ["p","Will “mic” and “mich” live on the same shard? Not necessarily, and it doesn't matter. Each read touches exactly one key, so it never needs both."],
@@ -92,7 +91,7 @@ BP.LESSONS.push({
       ["p","We still need to shard. For the trie version, what's the sharding key? Suggestions only start after 3 characters, so the natural choice is the <b>first 3 characters of the prefix</b>. Every query for “mich”, “michael” or “michigan” starts with “mic”, so they all go to the shard that owns the “mic” subtree."],
       ["math",[["Letters only","26 × 26 × 26","17,576 groups"],["Letters and digits","36 × 36 × 36","46,656 ≈ 50k groups"]],"Up to about 50k three-character groups, which you then spread across your shards."],
       ["p","But not all prefixes are equal. “the”, “how” and “mic” are scorching hot. “qzx” and “aaa” get a handful of queries a day. Give each group its own machine and some machines melt while others sleep. This is the classic <b>hot-spot</b> problem."],
-      ["p","The fix from the notes: <b>co-locate hot prefixes with cold ones</b>. Put “aaa” on the same shard as “mic”. Use consistent hashing on the first 3 characters to place each group, and balance shards by load rather than by the number of prefixes they hold."],
+      ["p","The fix: <b>co-locate hot prefixes with cold ones</b>. Put “aaa” on the same shard as “mic”. Use consistent hashing on the first 3 characters to place each group, and balance shards by load rather than by the number of prefixes they hold."],
       ["p","The hashmap version is simpler still. Any key–value store with consistent hashing works, with the key itself as the sharding key. The hash function spreads prefixes around, and hot keys can be replicated or cached further."]
     ] },
     { h: "Yesterday's news: time decay", blocks: [
@@ -101,7 +100,7 @@ BP.LESSONS.push({
       ["p","Idea 2, the one that works: decay by a <b>percentage</b>. Pick a <b>time decay factor</b> (TDF). Once a day, every count becomes <code>freq = freq / TDF</code>. Every search still adds <code>freq += 1</code>. A bigger TDF means faster forgetting."],
       ["p","With TDF = 2, a search made today counts as 1, yesterday's counts as ½, the day before ¼, and so on. That's <b>exponential decay</b>: every term loses the same share each day, and a term nobody searches any more eventually fades to nothing."],
       ["chart",{"type":"line","title":"How much a search still counts after d days","x":{"label":"days ago","values":[0,1,2,3,4,5,6,7]},"y":{"label":"weight","max":100},"fmt":"pct","series":[{"name":"TDF = 2","values":[100,50,25,12.5,6.25,3.125,1.5625,0.78125]},{"name":"TDF = 1.25","values":[100,80,64,51.2,40.96,32.768,26.2144,20.97152]}]}],
-      ["extra","A quick sanity check, worked out from the notes' numbers. With TDF = 2, a term searched a steady s times a day settles at about s × (1 + ½ + ¼ + …) = 2s. So Binny, at 1,000 a day, sits near 2,000 no matter how many years of history he has. Federer's 10,000 from yesterday are worth about 5,000 today, plus whatever today brings. Federer ranks first, as he should."],
+      ["extra","A quick sanity check with these numbers. With TDF = 2, a term searched a steady s times a day settles at about s × (1 + ½ + ¼ + …) = 2s. So Binny, at 1,000 a day, sits near 2,000 no matter how many years of history he has. Federer's 10,000 from yesterday are worth about 5,000 today, plus whatever today brings. Federer ranks first, as he should."],
       ["p","Try the moon button in the trie figure above: each press is one day passing, and you can watch old favourites slide down the lists."]
     ] },
     { h: "Putting it together", blocks: [

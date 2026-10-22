@@ -1,4 +1,4 @@
-/* Blueprint — DSA: trees and graphs. Content from the user's notes (Trees/tree1–5.pdf, Graphs/graph1–5.pdf) plus LeetCode practice. */
+/* Blueprint — DSA: trees and graphs. Lessons plus LeetCode practice. */
 (function () {
   const { nums, clone, cap } = BP.AV;
   const A = BP.ALGOS, T = BP.DSA.topics;
@@ -106,7 +106,7 @@
 
   const BIP = { 0: [80, 150], 1: [190, 60], 2: [300, 150], 3: [190, 240], 4: [320, 255], 5: [440, 190], 6: [450, 275], 7: [440, 60] };
   A.tg_bipartite = { title: "Bipartite check: 2-colour with DFS", inputLabel: "undirected edges among nodes 0–7, like 0-1", input: "0-1 0-3 2-1 2-3 4-3 4-5 4-6",
-    presets: [["Bipartite (notes)", "0-1 0-3 2-1 2-3 4-3 4-5 4-6"], ["Odd cycle", "0-1 0-3 2-1 2-3 4-3 4-5 4-6 1-3"], ["Two components", "0-1 1-2 5-6 6-7 5-7"]],
+    presets: [["Bipartite", "0-1 0-3 2-1 2-3 4-3 4-5 4-6"], ["Odd cycle", "0-1 0-3 2-1 2-3 4-3 4-5 4-6 1-3"], ["Two components", "0-1 1-2 5-6 6-7 5-7"]],
     about: "DFS gives every newly reached node the opposite colour of the node it came from (blue = A, pink = B). Thick edges already cross between the two sets; two red nodes joined by an edge share a colour, which proves an odd cycle.",
     code: ["col = [-1] * N", "def dfs(u):", "    for v in graph[u]:", "        if col[v] == col[u]:", "            return False            # same colour on an edge", "        if col[v] == -1:", "            col[v] = 1 - col[u]     # opposite colour", "            if not dfs(v):", "                return False", "    return True", "for i in range(N):", "    if col[i] == -1:", "        col[i] = 0                  # new component starts as A", "        if not dfs(i):", "            return False", "return True"],
     gen(s) { const es = cap(String(s).split(/\s+/).filter(Boolean).map((e) => e.split("-").map(Number)), 12, "edges");
@@ -135,7 +135,7 @@
       const lab = (e) => `${e[0]}-${e[1]} (${e[2]})`;
       const P = (cur) => [{ t: "graph", nodes: Object.entries(pos).map(([id, [x, y]]) => ({ id: +id, x, y, label: id, cls: cur && (cur[0] === +id || cur[1] === +id) ? "act" : "", tag: "set " + find(+id) })), edges: E.map((e) => [e[0], e[1], e[2], st[key(e)] === "take" ? "tree" : st[key(e)] === "skip" ? "dim" : ""]) },
         chips("sorted edges", sorted.map((e) => (st[key(e)] === "take" ? { v: lab(e), cls: "hit" } : st[key(e)] === "skip" ? "✗ " + lab(e) : e === cur ? "→ " + lab(e) : lab(e)))), vars({ total, "edges used": used + " / 5" })];
-      fr.push(F(0, "The notes' graph also has a self-loop on 6 and a second 2–3 edge of weight 8. Drop both: a self-loop is never in a tree, and the heavier copy of a multi-edge never wins.", P()));
+      fr.push(F(0, "The example graph also has a self-loop on 6 and a second 2–3 edge of weight 8. Drop both: a self-loop is never in a tree, and the heavier copy of a multi-edge never wins.", P()));
       fr.push(F(1, "Sort the 9 remaining edges by weight. Each node starts as its own set (the tag shows its DSU root).", P()));
       for (const e of sorted) { const [u, v, w] = e;
         if (find(u) === find(v)) { st[key(e)] = "skip"; fr.push(F(4, `${lab(e)}: ${u} and ${v} already share root ${find(u)}. Taking it would close a cycle, so skip.`, P(e))); continue; }
@@ -155,19 +155,19 @@
       const ek = (a, b) => Math.min(a, b) + "-" + Math.max(a, b);
       const P = (cur) => [{ t: "graph", nodes: Object.entries(pos).map(([id, [x, y]]) => ({ id: +id, x, y, label: id, cls: +id === cur ? "act" : vis[id] ? "done" : "" })), edges: E.map(([a, b, w]) => [a, b, w, tree[ek(a, b)] ? "tree" : vis[a] && vis[b] ? "dim" : ""]) },
         chips("min-heap (w, node)", pq.slice().sort((x, y) => x[0] - y[0] || x[3] - y[3]).map(([w, v]) => `(${w}, ${v})`)), vars({ total })];
-      fr.push(F(0, "Push (0, 0). The notes' code also set visited[0] = true before the loop; then the very first pop is skipped and nothing is added. Mark only when popping.", P(-1)));
+      fr.push(F(0, "Push (0, 0). Don't set visited[0] = true before the loop: then the very first pop is skipped and nothing is added. Mark only when popping.", P(-1)));
       while (pq.length) { pq.sort((x, y) => x[0] - y[0] || x[3] - y[3]); const [w, v, from] = pq.shift();
         if (vis[v]) { fr.push(F(4, `Pop (${w}, ${v}): ${v} is already in the tree, so this entry is stale. Skip.`, P(-1))); continue; }
         vis[v] = 1; total += w; if (from != null) tree[ek(from, v)] = 1;
         fr.push(F(6, from == null ? `Pop (0, ${v}): ${v} starts the tree.` : `Pop (${w}, ${v}): the cheapest edge out of the tree is ${from}–${v}. Add it, total = ${total}.`, P(v)));
         const pushed = []; adj[v].forEach(([nb, wt]) => { if (!vis[nb]) { pq.push([wt, nb, v, seq++]); pushed.push(`(${wt}, ${nb})`); } });
         if (pushed.length) fr.push(F(9, `Push edges to unvisited neighbours: ${pushed.join(", ")}`, P(v))); }
-      fr.push(F(-1, `MST weight = <b>${total}</b> (0 + 7 + 3 + 3 + 2 + 5). O(E log E) with an adjacency list. The 1–2 multi-edge of weight 8 from the notes is left out of the drawing: it would be stale too.`, P(-1)));
+      fr.push(F(-1, `MST weight = <b>${total}</b> (0 + 7 + 3 + 3 + 2 + 5). O(E log E) with an adjacency list. The 1–2 multi-edge of weight 8 is left out of the drawing: it would be stale too.`, P(-1)));
       return fr; } };
 
   const BF1 = "5>6:-3 4>5:2 1>4:10 3>4:-8 2>3:-6 1>2:11 | 1";
   A.tg_bellman = { title: "Bellman-Ford: relax every edge, N − 1 rounds", inputLabel: "directed edges u>v:w | source", input: BF1,
-    presets: [["Notes example", BF1], ["Negative cycle", "1>2:3 2>3:2 3>5:-6 5>4:3 4>2:-1 5>6:5 | 1"], ["Early stop", "1>2:4 1>3:1 3>2:2 2>4:1 | 1"]],
+    presets: [["Worked example", BF1], ["Negative cycle", "1>2:3 2>3:2 3>5:-6 5>4:3 4>2:-1 5>6:5 | 1"], ["Early stop", "1>2:4 1>3:1 3>2:2 2>4:1 | 1"]],
     about: "Rows are edges, columns are rounds. Each frame relaxes one edge; ✓ marks an edge that lowered a distance in that round, · means no change. The last column is the extra round that detects a negative cycle (!).",
     code: ["dist = [INF] * N", "dist[src] = 0", "for _ in range(N - 1):", "    changed = False", "    for u, v, w in edges:", "        if dist[u] != INF and dist[u] + w < dist[v]:", "            dist[v] = dist[u] + w", "            changed = True", "    if not changed:", "        break                       # a quiet round: stop early", "for u, v, w in edges:               # one extra round", "    if dist[u] != INF and dist[u] + w < dist[v]:", "        return 'negative cycle'", "return dist"],
     gen(s) { const [e0, s0] = split2(s); const es = parseWEdges(e0, 8); const ids = [...new Set(es.flatMap((e) => [e[0], e[1]]))].sort((x, y) => x - y); cap(ids, 7, "nodes");
@@ -208,7 +208,6 @@
   /* ═════════════════════════ TOPIC: TREES ═════════════════════════ */
   T["trees"] = {
     name: "Trees and BSTs", icon: "🌳", color: "#1f7a4f", minutes: 90,
-    notes: "tree1.pdf – tree5.pdf",
     summary: "Hierarchical data where every node has one parent: most answers come from asking the left and right subtrees and combining.",
     sections: [
       { h: "Why trees, and the words you need", blocks: [
@@ -222,7 +221,7 @@
           ["Level / depth", "edges from the root (root is level 0)"],
           ["Height of a node", "max edges from the node down to a leaf. Height of the tree = height of the root"],
           ["Subtree", "a node plus all its descendants (a leaf, and the whole tree, are subtrees too)"]]],
-        ["tip", "Convention in these notes: height is counted in <b>edges</b>, so <code>height(null) = -1</code> and a leaf has height 0. Complexities use N (nodes) and H (height). H = O(log N) when balanced, O(N) when skewed."],
+        ["tip", "Convention here: height is counted in <b>edges</b>, so <code>height(null) = -1</code> and a leaf has height 0. Complexities use N (nodes) and H (height). H = O(log N) when balanced, O(N) when skewed."],
         ["p", "A <b>binary tree</b> has at most 2 children per node, called left and right. Each node is an object <code>left | val | right</code> holding references. The left and right subtrees are binary trees themselves, which is why recursion fits so well."],
         ["table", ["Type", "Rule", "Example check"], [
           ["Full / proper", "every node has 0 or 2 children", "no node with a single child"],
@@ -231,8 +230,8 @@
           ["Balanced", "for <b>every</b> node, |height(left) − height(right)| ≤ 1", "keeps H = O(log N)"]]]
       ] },
       { h: "Traversals: recursive, iterative, Morris", blocks: [
-        ["p", "Depth-first traversals differ only in <b>when</b> you visit the node relative to its subtrees. Notes tree: 1 → (2, 3), 2 → (4, 5), 5 → (7, −), 3 → (−, 6), 6 → (8, 9)."],
-        ["table", ["Order", "Rule", "Output on the notes tree"], [
+        ["p", "Depth-first traversals differ only in <b>when</b> you visit the node relative to its subtrees. Example tree: 1 → (2, 3), 2 → (4, 5), 5 → (7, −), 3 → (−, 6), 6 → (8, 9)."],
+        ["table", ["Order", "Rule", "Output on the example tree"], [
           ["Pre-order", "N L R (root first)", "1 2 4 5 7 3 6 8 9"],
           ["In-order", "L N R", "4 2 7 5 1 3 8 6 9"],
           ["Post-order", "L R N (root last)", "4 7 5 2 8 9 6 3 1"]]],
@@ -253,7 +252,7 @@
             ],
             edge: "empty tree (loop never runs), left-skewed tree (stack holds N nodes)", lc: "binary-tree-inorder-traversal" },
           { t: "Iterative pre-order traversal", d: "Easy", q: "Pre-order (N L R) with an explicit stack.",
-            ex: "Notes tree → 1 2 4 5 7 3 6 8 9",
+            ex: "Example tree → 1 2 4 5 7 3 6 8 9",
             ap: [
               { n: "Brute force", cx: "O(N) time · O(H) space",
                 idea: "Recursion: visit the node, then recurse left, then right. Short, but uses the call stack.",
@@ -329,7 +328,7 @@
             ],
             edge: "two nodes can share row and column (8 and 10). BFS keeps them left to right; LeetCode 987 instead sorts ties by value, so ask which rule applies.", lc: "vertical-order-traversal-of-a-binary-tree" },
           { t: "Top view and bottom view", d: "Medium", q: "Top view: the first (topmost) node in each column. Bottom view: the last (deepest) node in each column.",
-            ex: "Notes tree (with extra node 20 at column 3)\nTop view: 6 5 2 1 3 13 20",
+            ex: "Example tree (with extra node 20 at column 3)\nTop view: 6 5 2 1 3 13 20",
             ap: [
               { n: "Brute force", cx: "O(N) time · O(N) space",
                 idea: "Build the full vertical order, then take the first (top) / last (bottom) of each column. Stores every node just to keep two per column.",
@@ -439,7 +438,7 @@
             ex: "3→(7,4), 7→(9,-), 9→(12,19), 4→(14,18), 14→(15,1), 15→(21,2), 1→(-,6), 18→(-,25)\nLCA(21, 6) = 14 · LCA(2, 6) = 14 · LCA(21, 4) = 4 · LCA(12, 6) = 3",
             ap: [
               { n: "Brute force", cx: "O(N) time · O(H) space, two passes",
-                idea: "Notes' method: get the paths for both nodes (21: [3,4,14,15,21], 6: [3,4,14,1,6]). Walk them together from the <b>root end</b> while the values match. The last match is the LCA. Also works when one node may be missing.",
+                idea: "Path method: get the paths for both nodes (21: [3,4,14,15,21], 6: [3,4,14,1,6]). Walk them together from the <b>root end</b> while the values match. The last match is the LCA. Also works when one node may be missing.",
                 code: "def lca(root, a, b):\n    pa = path_to(root, a)               # root → a, from the problem above\n    pb = path_to(root, b)\n    ans = None\n    for x, y in zip(pa, pb):\n        if x != y:\n            break\n        ans = x                         # last common value on both paths\n    return ans" },
               { n: "Optimal", cx: "O(N) time · O(H) space, one pass",
                 idea: "If the node is null or equals a or b, return it. Recurse left and right. If <b>both sides return non-null</b>, this node is where they split: it's the LCA. Otherwise pass up whichever side found something.",
@@ -483,12 +482,12 @@
             ap: [
               { n: "Better", cx: "O(H) time · O(H) space (recursion)",
                 idea: "Recursive: <code>root.right = insert(root.right, t)</code> (or left) and return root. The call that reaches null creates the node, and the assignments on the way back attach it.",
-                code: "def insert(root, t):\n    if not root:\n        return Node(t)                  # fell off the tree: new node here\n    if root.val == t:\n        return root                     # already present: notes don't insert\n    if root.val < t:\n        root.right = insert(root.right, t)\n    else:\n        root.left = insert(root.left, t)\n    return root" },
+                code: "def insert(root, t):\n    if not root:\n        return Node(t)                  # fell off the tree: new node here\n    if root.val == t:\n        return root                     # already present: don't insert\n    if root.val < t:\n        root.right = insert(root.right, t)\n    else:\n        root.left = insert(root.left, t)\n    return root" },
               { n: "Optimal", cx: "O(H) time · O(1) space",
                 idea: "Walk like a search keeping <b>prev</b>. When curr falls off (null), attach the new node to prev on the correct side.",
                 code: "def insert(root, t):\n    if not root:\n        return Node(t)\n    prev = None\n    curr = root\n    while curr:\n        if curr.val == t:\n            return root\n        prev = curr\n        curr = curr.right if curr.val < t else curr.left\n    if prev.val < t:\n        prev.right = Node(t)\n    else:\n        prev.left = Node(t)\n    return root" }
             ],
-            edge: "empty tree → the new node is the root. Value already present → notes return without inserting.", lc: "insert-into-a-binary-search-tree" },
+            edge: "empty tree → the new node is the root. Value already present → return without inserting.", lc: "insert-into-a-binary-search-tree" },
           { t: "Smallest and largest in a BST", d: "Easy", q: "Find the min and max.",
             ex: "Same tree: smallest 8→4→1 = 1, largest 8→12→15→17 = 17",
             ap: [
@@ -526,12 +525,12 @@
                 code: "def subtree_vals(node):\n    if not node:\n        return []\n    return subtree_vals(node.left) + [node.val] + subtree_vals(node.right)\n\ndef is_bst(node):\n    if not node:\n        return True\n    if any(v > node.val for v in subtree_vals(node.left)):\n        return False\n    if any(v <= node.val for v in subtree_vals(node.right)):\n        return False\n    return is_bst(node.left) and is_bst(node.right)" },
               { n: "Better", cx: "O(N) time · O(N) space",
                 idea: "The <b>in-order of a BST is sorted</b>. Write it to an array and check it never decreases.",
-                code: "def is_bst(root):\n    vals = []\n\n    def inorder(node):\n        if node:\n            inorder(node.left)\n            vals.append(node.val)\n            inorder(node.right)\n\n    inorder(root)\n    # notes' rule (left <= node): only a strict drop is a violation\n    return all(vals[i - 1] <= vals[i] for i in range(1, len(vals)))" },
+                code: "def is_bst(root):\n    vals = []\n\n    def inorder(node):\n        if node:\n            inorder(node.left)\n            vals.append(node.val)\n            inorder(node.right)\n\n    inorder(root)\n    # rule here (left <= node): only a strict drop is a violation\n    return all(vals[i - 1] <= vals[i] for i in range(1, len(vals)))" },
               { n: "Optimal", cx: "O(N) time · O(H) space",
                 idea: "Same in-order, but keep only <b>prev</b> (last visited value, starting at −∞). If you ever see <code>node.val &lt; prev</code>, it's not a BST. Alternative: pass down a <b>(lo, hi) range</b> and check every node fits.",
                 code: "def is_bst(root):\n    prev = float('-inf')\n    ok = True\n\n    def inorder(node):\n        nonlocal prev, ok\n        if not node or not ok:\n            return\n        inorder(node.left)\n        if node.val < prev:             # use <= for LeetCode 98 (strict)\n            ok = False\n        prev = node.val\n        inorder(node.right)\n\n    inorder(root)\n    return ok" }
             ],
-            edge: "the notes use <code>&lt;</code>, so equal values pass (matching ≤ on the left). LeetCode 98 wants strict, so use ≤ there. Use −∞ / None, not INT_MIN, as the start.", lc: "validate-binary-search-tree" },
+            edge: "this version checks with <code>&lt;</code>, so equal values pass (matching ≤ on the left). LeetCode 98 wants strict, so use ≤ there. Use −∞ / None, not INT_MIN, as the start.", lc: "validate-binary-search-tree" },
           { t: "Kth smallest element in a BST", d: "Medium", q: "Return the kth smallest value.",
             ex: "4→(0,10), 0→(-1,3), 10→(7,15), 7→(6,9), 15→(-,20), 20→(19,25)\nIn-order: -1 0 3 4 6 7 9 10 15 19 20 25 → K = 3 gives 3",
             ap: [
@@ -576,7 +575,7 @@
             ],
             viz: "tg_bstLCA", lc: "lowest-common-ancestor-of-a-binary-search-tree" }
         ]],
-        ["viz", "tg_bstLCA", "LCA in a BST: one cursor, three questions per node. Try the presets from the notes."]
+        ["viz", "tg_bstLCA", "LCA in a BST: one cursor, three questions per node. Try the presets."]
       ] },
       { h: "Build, link, flatten, serialize", blocks: [
         ["p", "These problems rebuild or rewire a tree. They test whether you can track index ranges and pointers precisely."],
@@ -687,7 +686,7 @@
       { q: "A tree has 40 nodes. How many edges does it have?", o: ["40", "39", "41", "It depends on the shape"], a: 1, why: "Every node except the root has exactly one parent edge, so N − 1 = 39." },
       { q: "Which traversal of a BST visits values in sorted order?", o: ["Pre-order", "Post-order", "In-order", "Level order"], a: 2, why: "In-order is left subtree, node, right subtree. In a BST that is smaller values, node, larger values." },
       { q: "Diameter: at a node with left height 4 and right height 4 (heights in edges, height(null) = −1), the path bending there has length…", o: ["8", "9", "10", "4"], a: 2, why: "lh + rh + 2 = 4 + 4 + 2 = 10: two edges connect the node to each child, plus the heights below." },
-      { q: "Why does recursive pre-order give the wrong order for vertical order traversal?", o: ["It visits columns out of order", "A deep node in a column can be visited before a shallower one", "It can't track column numbers", "It visits nodes twice"], a: 1, why: "Pre-order goes deep first, so in the notes' tree column 0 comes out 1, 16, 8, 10, 12. BFS visits by depth, so each column fills top to bottom." },
+      { q: "Why does recursive pre-order give the wrong order for vertical order traversal?", o: ["It visits columns out of order", "A deep node in a column can be visited before a shallower one", "It can't track column numbers", "It visits nodes twice"], a: 1, why: "Pre-order goes deep first, so in the example tree column 0 comes out 1, 16, 8, 10, 12. BFS visits by depth, so each column fills top to bottom." },
       { q: "In Morris in-order traversal, what does the temporary thread point to?", o: ["From curr to its predecessor", "From the in-order predecessor's right pointer back to curr", "From the root to the leftmost leaf", "From a leaf to its parent"], a: 1, why: "The predecessor (rightmost node of curr.left) has a null right pointer; pointing it at curr lets you climb back up without a stack." },
       { q: "Deleting a BST node with two children: what replaces its value?", o: ["Its left child's value", "The max of its left subtree (or min of its right subtree)", "The root's value", "Any leaf's value"], a: 1, why: "The in-order predecessor or successor is the only value that keeps everything on the left smaller and everything on the right larger." },
       { q: "In the one-pass LCA in a binary tree, when is the current node the answer?", o: ["When it equals v1", "When both recursive calls return non-null", "When it is a leaf", "When the left call returns null"], a: 1, why: "If v1 is found in one subtree and v2 in the other, this is the deepest node above both." },
@@ -698,12 +697,11 @@
   /* ═════════════════════════ TOPIC: GRAPHS ═════════════════════════ */
   T["graphs"] = {
     name: "Graphs", icon: "🕸️", color: "#7c3aed", minutes: 120,
-    notes: "graph1.pdf – graph5.pdf",
     summary: "Nodes joined by edges: pick the traversal (DFS, BFS, heap, DSU) that matches what the question asks about the connections.",
     sections: [
       { h: "What a graph is and how to store it", blocks: [
         ["analogy", "Computers on a LAN, cities joined by roads, friends in a social network. A tree is a special graph: it has a root, N nodes with N − 1 edges, and no cycle. A general graph drops all three rules."],
-        ["table", ["Property", "Meaning", "Example from the notes"], [
+        ["table", ["Property", "Meaning", "Example"], [
           ["Directed vs undirected", "edge i → j only goes one way / goes both ways", "prerequisites are directed; roads usually not"],
           ["Connected vs disconnected", "every node reachable from every other, or not", "1-2-3-4 plus a separate 5-6"],
           ["Weighted vs unweighted", "edges carry a cost, or all cost 1", "1 → 2 with weight 5"],
@@ -890,8 +888,8 @@
               { n: "Brute force", cx: "O(V · (V + E)) time · O(V) space",
                 idea: "Trying subsets is exponential. A simpler correct brute force: sweep everyone, send home anyone with fewer than K friends still present, and repeat full sweeps until a sweep changes nothing.",
                 code: "def max_guests(N, graph, K):\n    alive = [True] * N\n    changed = True\n    while changed:                      # full pass until nobody leaves\n        changed = False\n        for u in range(N):\n            if alive[u]:\n                friends = sum(1 for v in graph[u] if alive[v])\n                if friends < K:\n                    alive[u] = False\n                    changed = True\n    return sum(alive)" },
-              { n: "Optimal", cx: "O(V + E) time · O(V) space (O((V + E) log V) with the notes' heap)",
-                idea: "This is the <b>K-core</b>. Remove anyone whose current degree is below K and lower their friends' degrees; anyone who drops below K joins the queue (cascade). The notes use a min-heap by degree; a plain queue of 'below K' people works too.",
+              { n: "Optimal", cx: "O(V + E) time · O(V) space (O((V + E) log V) with a heap)",
+                idea: "This is the <b>K-core</b>. Remove anyone whose current degree is below K and lower their friends' degrees; anyone who drops below K joins the queue (cascade). A min-heap by degree works; a plain queue of 'below K' people works too.",
                 code: "from collections import deque\n\ndef max_guests(N, graph, K):\n    deg = [len(graph[i]) for i in range(N)]\n    gone = [False] * N\n    q = deque()\n    for i in range(N):\n        if deg[i] < K:\n            gone[i] = True\n            q.append(i)\n    while q:\n        u = q.popleft()\n        for v in graph[u]:\n            if not gone[v]:\n                deg[v] -= 1             # v lost a friend\n                if deg[v] < K:\n                    gone[v] = True      # cascade\n                    q.append(v)\n    return N - sum(gone)" }
             ] },
           { t: "Word ladder", d: "Hard", q: "Fewest one-letter changes from beginWord to endWord using a dictionary.",
@@ -908,7 +906,7 @@
         ]],
         ["viz", "tg_multiBFS", "Multi-source BFS spreads from every source at once. Try the rotting-oranges presets."],
         ["viz", "tg_bipartite", "Bipartite check: colours alternate along every edge until an odd cycle forces a clash."],
-        ["extra", "Colouring facts from the notes: a tree (with an edge) always needs exactly 2 colours. A cycle graph needs <b>2 + (N % 2)</b>: 2 for even length, 3 for odd. A bipartite graph with sides N and M has at most N · M edges."]
+        ["extra", "Colouring facts: a tree (with an edge) always needs exactly 2 colours. A cycle graph needs <b>2 + (N % 2)</b>: 2 for even length, 3 for odd. A bipartite graph with sides N and M has at most N · M edges."]
       ] },
       { h: "Minimum spanning trees: Prim and Kruskal", blocks: [
         ["p", "Scenario (Flipkart logistics): N delivery centres and possible roads with build costs. Connect every centre at minimum total cost. Fewest edges that connect N nodes is N − 1, which is a <b>tree</b>; the cheapest such tree is the <b>Minimum Spanning Tree</b>."],
@@ -920,10 +918,10 @@
             ex: "Nodes 0..5: 0-1 (7), 3-0 (8), 1-2 (6), 1-2 (8), 1-3 (3), 2-3 (4), 2-4 (2), 2-5 (5), 4-5 (5), 3-4 (3)\nAdded: 0 (0), 1 (7), 3 (3), 4 (3), 2 (2), 5 (5) → 20",
             ap: [
               { n: "Brute force", cx: "O(V · E) time · O(V) space",
-                idea: "Version 1 from the notes: each time a node joins, scan the whole edge list for the cheapest edge with exactly one end in the tree.",
+                idea: "Version 1: each time a node joins, scan the whole edge list for the cheapest edge with exactly one end in the tree.",
                 code: "def prim(N, edges):\n    in_tree = [False] * N\n    in_tree[0] = True\n    total = 0\n    for _ in range(N - 1):\n        best = None\n        for u, v, w in edges:           # cheapest edge crossing the cut\n            if in_tree[u] != in_tree[v]:\n                if best is None or w < best[2]:\n                    best = (u, v, w)\n        if best is None:\n            return None                 # disconnected\n        in_tree[best[0]] = True\n        in_tree[best[1]] = True\n        total += best[2]\n    return total" },
               { n: "Optimal", cx: "O(E log E) time · O(V + E) space",
-                idea: "Min-heap of (weight, node). Pop the smallest; if the node is already in the tree it's a <b>stale</b> entry, skip it. Otherwise add it and its weight, and push edges to its unvisited neighbours. <b>Fix to the notes' code:</b> don't set visited[start] before the loop, or the first pop (start, 0) gets skipped and nothing is ever added. Mark only on pop.",
+                idea: "Min-heap of (weight, node). Pop the smallest; if the node is already in the tree it's a <b>stale</b> entry, skip it. Otherwise add it and its weight, and push edges to its unvisited neighbours. <b>Watch out:</b> don't set visited[start] before the loop, or the first pop (start, 0) gets skipped and nothing is ever added. Mark only on pop.",
                 code: "import heapq\n\ndef prim(N, graph):\n    seen = [False] * N\n    pq = [(0, 0)]                       # (edge weight, node); start NOT pre-marked\n    total = 0\n    while pq:\n        w, v = heapq.heappop(pq)\n        if seen[v]:\n            continue                    # stale entry\n        seen[v] = True                  # mark on pop\n        total += w\n        for nb, wt in graph[v]:\n            if not seen[nb]:\n                heapq.heappush(pq, (wt, nb))\n    return total if all(seen) else None" }
             ],
             edge: "disconnected graph: only one component is covered, so check the visited count. Self-loops are skipped automatically; multi-edges are fine.", viz: "tg_prim", lc: "min-cost-to-connect-all-points" },
@@ -967,7 +965,7 @@
             ex: "1→2 (5), 1→3 (6), 3→2 (−2), 2→4 (2)\nTrue 1→4 = 1→3→2→4 = 6 − 2 + 2 = 6\nDijkstra finalises 2 at 5 and reports 7",
             ap: [
               { n: "Solution",
-                idea: "Greedy 'first pop is final' assumes extending a path never makes it cheaper. A negative edge breaks that: here 2 is popped and finalised at 5 before the cheaper route 1→3→2 (6 − 2 = 4) is seen, so 4 ends up at 7 instead of 6. And with a <b>negative cycle</b> (2→3→5→4→2 totalling −2 in the notes) going round again always lowers the cost, so the shortest distance isn't even defined. Use Bellman-Ford." }
+                idea: "Greedy 'first pop is final' assumes extending a path never makes it cheaper. A negative edge breaks that: here 2 is popped and finalised at 5 before the cheaper route 1→3→2 (6 − 2 = 4) is seen, so 4 ends up at 7 instead of 6. And with a <b>negative cycle</b> (2→3→5→4→2 totalling −2 in the example) going round again always lowers the cost, so the shortest distance isn't even defined. Use Bellman-Ford." }
             ] },
           { t: "Bellman-Ford (corrected)", d: "Medium", q: "Single-source shortest paths when some edges are negative; also detect a negative cycle.",
             ex: "Edges in order: 5→6 (−3), 4→5 (2), 1→4 (10), 3→4 (−8), 2→3 (−6), 1→2 (11); src 1\nRound 1: d4 = 10, d2 = 11 · Round 2: d5 = 12, d3 = 5 · Round 3: d6 = 9, d4 = −3\nRound 4: d5 = −1 · Round 5: d6 = −4\nFinal: [0, 11, 5, −3, −1, −4]",
@@ -976,7 +974,7 @@
                 idea: "Dijkstra is wrong with negative edges. Trying every simple path (DFS, as in the Dijkstra brute force) is correct when there is no negative cycle, but exponential.",
                 code: "def shortest_brute(graph, src, N):\n    best = [float('inf')] * (N + 1)\n    on_path = [False] * (N + 1)\n\n    def dfs(u, d):\n        best[u] = min(best[u], d)\n        on_path[u] = True\n        for v, w in graph[u]:           # simple paths only\n            if not on_path[v]:\n                dfs(v, d + w)\n        on_path[u] = False\n\n    dfs(src, 0)\n    return best" },
               { n: "Optimal", cx: "O(V · E) time · O(V) space",
-                idea: "Relax <b>every edge</b>, N − 1 times. A shortest simple path has at most N − 1 edges, and each round fixes at least one more edge of it, whatever the edge order. Then run <b>one more round</b>: if anything still improves, there's a negative cycle. <b>Fix to the notes' code:</b> skip edges whose source is still ∞ (<code>dist[u] != INF</code>), or INF + negative overflows into a fake 'improvement'. Stop early if a round changes nothing.",
+                idea: "Relax <b>every edge</b>, N − 1 times. A shortest simple path has at most N − 1 edges, and each round fixes at least one more edge of it, whatever the edge order. Then run <b>one more round</b>: if anything still improves, there's a negative cycle. <b>Watch out:</b> skip edges whose source is still ∞ (<code>dist[u] != INF</code>), or INF + negative overflows into a fake 'improvement'. Stop early if a round changes nothing.",
                 code: "def bellman_ford(N, edges, src):\n    INF = float('inf')\n    dist = [INF] * (N + 1)\n    dist[src] = 0\n    for _ in range(N - 1):\n        changed = False\n        for u, v, w in edges:\n            if dist[u] != INF and dist[u] + w < dist[v]:\n                dist[v] = dist[u] + w\n                changed = True\n        if not changed:\n            break                       # nothing moved: stop early\n    for u, v, w in edges:               # one extra round\n        if dist[u] != INF and dist[u] + w < dist[v]:\n            return None                 # negative cycle\n    return dist" }
             ],
             viz: "tg_bellman", lc: "cheapest-flights-within-k-stops" },
@@ -1003,7 +1001,7 @@
             ],
             lc: "minimum-obstacle-removal-to-reach-corner" }
         ]],
-        ["viz", "tg_bellman", "Bellman-Ford: the table ticks which edge improved a distance in which round, as in the notes. Try the negative-cycle preset."],
+        ["viz", "tg_bellman", "Bellman-Ford: the table ticks which edge improved a distance in which round. Try the negative-cycle preset."],
         ["viz", "tg_floyd", "Floyd-Warshall: row k and column k hold the 'via k' values. Watch d[0][3] go ∞ → 11 → 3."]
       ] },
       { h: "Interview cheatsheet", blocks: [
@@ -1052,7 +1050,7 @@
       ["Minimum Obstacle Removal to Reach Corner", "minimum-obstacle-removal-to-reach-corner", "Hard"]
     ],
     quiz: [
-      { q: "In directed-graph DFS you reach a node that is visited but not on the current path. What does that mean?", o: ["A cycle", "A cross or forward edge, not a cycle", "The graph is disconnected", "A self-loop"], a: 1, why: "A cycle needs a back edge to a node still on the recursion path. The notes' 0→1, 1→2, 1→3, 2→3 example reaches 3 twice with no cycle." },
+      { q: "In directed-graph DFS you reach a node that is visited but not on the current path. What does that mean?", o: ["A cycle", "A cross or forward edge, not a cycle", "The graph is disconnected", "A self-loop"], a: 1, why: "A cycle needs a back edge to a node still on the recursion path. The 0→1, 1→2, 1→3, 2→3 example reaches 3 twice with no cycle." },
       { q: "Why must BFS mark a node visited when it is enqueued?", o: ["To save memory only", "Otherwise the same node can be queued several times before it is dequeued", "So DFS still works", "It doesn't matter"], a: 1, why: "Between enqueue and dequeue, other neighbours may discover the same node again. Marking early keeps each node in the queue once, preserving O(V + E)." },
       { q: "Multi-source BFS for 'nearest hospital' starts with…", o: ["One BFS per residence", "Every hospital in the queue at distance 0", "The farthest residence", "A random hospital"], a: 1, why: "Putting all sources in at once acts like a single super-source, so one BFS gives each cell its distance to the nearest source." },
       { q: "Kruskal rejects an edge (u, v) when…", o: ["Its weight is larger than the previous edge", "find(u) == find(v)", "u or v has degree 0", "It's the last edge"], a: 1, why: "If u and v already share a DSU root, they're connected, so the edge would close a cycle." },

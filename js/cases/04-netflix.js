@@ -328,7 +328,7 @@ BP.CASES.push({
       h: "Interview follow-ups",
       blocks: [
         ["list",["Live events? → segments must be encoded in real time, the manifest updates constantly, and everyone requests the same segment at once (see the video lesson).","Downloads for offline viewing? → the same renditions with a time-limited offline DRM licence.","\"Continue watching\"? → the player posts its position every few seconds to a small, eventually consistent store.","Thumbnails and artwork? → personalised images chosen by a separate service and served from the CDN."]],
-        ["extra","<b>Live is a different beast.</b> In the Scaler notes' Hotstar case, live cricket is cut into short segments (about 15–30 seconds there) that are transcoded the moment they arrive and pushed to the CDN, while players keep polling for the newest segment list. Smaller segments mean less delay but more metadata to fetch. Hotstar also scales up <i>before</i> big moments using predictions from viewing patterns, because autoscaling reacts too slowly when, say, a star batsman walks out and millions of people open the app at once."]
+        ["extra","<b>Live is a different beast.</b> In Hotstar's case, live cricket is cut into short segments (about 15–30 seconds there) that are transcoded the moment they arrive and pushed to the CDN, while players keep polling for the newest segment list. Smaller segments mean less delay but more metadata to fetch. Hotstar also scales up <i>before</i> big moments using predictions from viewing patterns, because autoscaling reacts too slowly when, say, a star batsman walks out and millions of people open the app at once."]
       ]
     },
     {
